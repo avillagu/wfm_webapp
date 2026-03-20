@@ -92,14 +92,18 @@ export class ApiService {
 
   saveEmployee(payload: any): Observable<any> {
     const isNew = !payload.id;
-    const backendPayload = {
-      ...payload,
-      first_name: payload.name?.split(' ')[0] || payload.username,
-      last_name: payload.name?.split(' ')[1] || '',
-      role_id: payload.role === 'admin' ? 1 : (payload.role === 'supervisor' ? 2 : 3),
-      username: payload.username || payload.name?.toLowerCase().replace(' ', '.'),
-      email: payload.email || `${payload.username || 'user'}@mapo.com`,
-      password: payload.password || 'welcome123'
+    const nameParts = (payload.name || '').split(' ');
+    const generatedUsername = payload.username || (payload.name || 'user').toLowerCase().replace(/\s+/g, '.');
+    const backendPayload: any = {
+      firstName: nameParts[0] || generatedUsername,
+      lastName: nameParts.slice(1).join(' ') || '-',
+      roleId: payload.role === 'admin' ? 1 : (payload.role === 'supervisor' ? 2 : 3),
+      username: generatedUsername,
+      email: payload.email || `${generatedUsername}@mapo.com`,
+      password: payload.password || 'welcome123',
+      groupId: payload.groupId ? parseInt(payload.groupId) : null,
+      employeeCode: payload.employeeCode || `EMP${Date.now().toString().slice(-6)}`,
+      isActive: payload.active !== false
     };
     
     if (isNew) {

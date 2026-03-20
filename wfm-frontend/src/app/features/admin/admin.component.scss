@@ -283,8 +283,9 @@ input[type="checkbox"]:checked + .toggle { background: #0284c7; &::after { left:
         accent-color: #0284c7;
         cursor: pointer;
         border-radius: 4px;
+        display: inline-block !important;
 
-        &:disabled { opacity: 0.35; cursor: not-allowed; }
+        &:disabled { opacity: 0.85; cursor: default; }
         &.fixed { accent-color: #64748b; }
       }
     }
