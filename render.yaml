@@ -1,0 +1,29 @@
+services:
+  # Backend API
+  - type: web
+    name: mapo-wfm-backend
+    env: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mapo-wfm-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        value: https://wfm-webapp-frontend.vercel.app # Placeholder, user should update this
+      - key: PORT
+        value: 10000
+
+databases:
+  # Managed PostgreSQL
+  - name: mapo-wfm-db
+    plan: free
+    databaseName: wfm_db
+    user: postgres
