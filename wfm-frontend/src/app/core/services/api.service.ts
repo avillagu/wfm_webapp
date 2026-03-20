@@ -1,147 +1,178 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { ChangeRequest, DashboardMetrics, Employee, Group, Shift, ShiftDay } from '../models/models';
+import { AuthService } from './auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly base = environment.apiBaseUrl;
 
-  private _mockGroups: Group[] = [
-    { id: 'g1', name: 'CX-Norte', code: 'CX-N' },
-    { id: 'g2', name: 'CX-Sur', code: 'CX-S' },
-    { id: 'g3', name: 'Backoffice', code: 'BK-1' }
-  ];
+  constructor(private http: HttpClient, private auth: AuthService) {}
 
-  private _mockEmployees: Employee[] = [
-    { id: 'e1', name: 'Ana Velasco', username: 'ana', role: 'analyst', groupId: 'g1', groupName: 'CX-Norte', active: true },
-    { id: 'e2', name: 'Luis Duarte', username: 'luis', role: 'supervisor', groupId: 'g1', groupName: 'CX-Norte', active: true },
-    { id: 'e3', name: 'Camila Ríos', username: 'camila', role: 'analyst', groupId: 'g2', groupName: 'CX-Sur', active: true },
-    { id: 'e4', name: 'Jorge Valdés', username: 'jorge', role: 'analyst', groupId: 'g3', groupName: 'Backoffice', active: true }
-  ];
-
-  private _mockShifts: Shift[] = [];
-
-  constructor(private http: HttpClient) {}
+  private get headers() {
+    const token = this.auth.user()?.token;
+    return new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Authorization': token ? `Bearer ${token}` : ''
+    });
+  }
 
   getDashboardSnapshot(): Observable<DashboardMetrics> {
-    return this.http.get<DashboardMetrics>(`${this.base}/dashboard/metrics`).pipe(
-      this.fallback<DashboardMetrics>({ onClock: 18, offClock: 7, pendingRequests: 5, alerts: 2 })
+    return this.http.get<any>(`${this.base}/reports/dashboard`, { headers: this.headers }).pipe(
+      map(res => ({
+        onClock: res.on_clock || 0,
+        offClock: res.off_clock || 0,
+        pendingRequests: res.pending_requests || 0,
+        alerts: 0
+      })),
+      catchError(err => {
+        console.error('Error fetching dashboard summary:', err);
+        return throwError(() => err);
+      })
     );
   }
 
   getSchedule(range: { from: string; to: string; group?: string }): Observable<ShiftDay[]> {
-    return this.http
-      .get<ShiftDay[]>(`${this.base}/scheduling`, { params: { ...range } })
-      .pipe(this.fallback(this.mockSchedule(range)));
-  }
-
-  moveShift(shiftId: string, payload: Partial<Shift>): Observable<{ success: boolean }> {
-    const idx = this._mockShifts.findIndex(s => s.id === shiftId);
-    if (idx !== -1) {
-      this._mockShifts[idx] = { ...this._mockShifts[idx], ...payload };
-    } else {
-      this._mockShifts.push(payload as Shift);
-    }
-    return this.http
-      .patch<{ success: boolean }>(`${this.base}/scheduling/${shiftId}`, payload)
-      .pipe(this.fallback<{ success: boolean }>({ success: true }));
-  }
-
-  deleteShift(shiftId: string): Observable<{ success: boolean }> {
-    this._mockShifts = this._mockShifts.filter(s => s.id !== shiftId);
-    return this.http.delete<{ success: boolean }>(`${this.base}/scheduling/${shiftId}`).pipe(this.fallback<{ success: boolean }>({ success: true }));
-  }
-
-  bulkCreateShifts(shifts: Shift[]): Observable<{ success: boolean }> {
-    this._mockShifts.push(...shifts);
-    return this.http.post<{ success: boolean }>(`${this.base}/scheduling/bulk`, { shifts }).pipe(this.fallback<{ success: boolean }>({ success: true }));
-  }
-
-  clock(direction: 'in' | 'out'): Observable<{ timestamp: string }> {
-    return this.http.post<{ timestamp: string }>(`${this.base}/attendance/clock-${direction}`, {}).pipe(
-      this.fallback<{ timestamp: string }>({ timestamp: new Date().toISOString() })
+    return this.http.get<any[]>(`${this.base}/shifts/calendar`, { 
+      params: { 
+        startDate: range.from, 
+        endDate: range.to,
+        groupId: range.group || ''
+      }, 
+      headers: this.headers 
+    }).pipe(
+      map(res => this.mapShiftsToDays(res, range.from))
     );
   }
 
-  listRequests(): Observable<ChangeRequest[]> {
-    return this.http.get<ChangeRequest[]>(`${this.base}/requests`).pipe(this.fallback<ChangeRequest[]>([]));
+  saveGroup(payload: Partial<Group>): Observable<Group> {
+    const isNew = !payload.id;
+    if (isNew) {
+      return this.http.post<any>(`${this.base}/groups`, payload, { headers: this.headers }).pipe(
+        map(res => res.group || res)
+      );
+    } else {
+      return this.http.put<any>(`${this.base}/groups/${payload.id}`, payload, { headers: this.headers }).pipe(
+        map(res => res.group || res)
+      );
+    }
   }
 
   listGroups(): Observable<Group[]> {
-    return this.http.get<Group[]>(`${this.base}/admin/groups`).pipe(this.fallback([...this._mockGroups]));
+    return this.http.get<Group[]>(`${this.base}/groups`, { headers: this.headers });
   }
 
-  saveGroup(payload: Partial<Group>): Observable<Group> {
-    return this.http.post<Group>(`${this.base}/admin/groups`, payload).pipe(this.fallback(this._simulateSaveGroup(payload)));
-  }
-
-  deleteGroup(id: string): Observable<boolean> {
-    return this.http.delete<boolean>(`${this.base}/admin/groups/${id}`).pipe(this.fallback(this._simulateDeleteGroup(id)));
+  deleteGroup(id: string): Observable<any> {
+    return this.http.delete(`${this.base}/groups/${id}`, { headers: this.headers });
   }
 
   listEmployees(groupId?: string): Observable<Employee[]> {
-    return this.http
-      .get<Employee[]>(`${this.base}/admin/employees`, { params: { groupId: groupId ?? '' } })
-      .pipe(this.fallback(groupId ? this._mockEmployees.filter(e => e.groupId === groupId) : [...this._mockEmployees]));
+    const url = groupId ? `${this.base}/users/group/${groupId}` : `${this.base}/users`;
+    return this.http.get<any[]>(url, { headers: this.headers }).pipe(
+      map(list => {
+        const data = Array.isArray(list) ? list : (list as any).users || [];
+        return data.map((u: any) => ({
+          id: u.id,
+          name: `${u.first_name} ${u.last_name}`,
+          username: u.username,
+          role: u.role_name?.toLowerCase() || 'analyst',
+          groupId: u.group_id,
+          groupName: u.group_name,
+          active: u.is_active
+        }));
+      })
+    );
   }
 
-  saveEmployee(payload: Partial<Employee>): Observable<Employee> {
-    return this.http.post<Employee>(`${this.base}/admin/employees`, payload).pipe(this.fallback(this._simulateSaveEmployee(payload)));
-  }
-
-  deleteEmployee(id: string): Observable<boolean> {
-    return this.http.delete<boolean>(`${this.base}/admin/employees/${id}`).pipe(this.fallback(this._simulateDeleteEmployee(id)));
-  }
-
-  // --- INTERNAL MOCK STATE ENGINE ---
-  private _simulateSaveGroup(payload: Partial<Group>): Group {
-    const existing = this._mockGroups.find(g => g.id === payload.id);
-    if (existing) {
-      Object.assign(existing, payload);
-      return existing;
+  saveEmployee(payload: any): Observable<any> {
+    const isNew = !payload.id;
+    const backendPayload = {
+      ...payload,
+      first_name: payload.name?.split(' ')[0] || payload.username,
+      last_name: payload.name?.split(' ')[1] || '',
+      role_id: payload.role === 'admin' ? 1 : (payload.role === 'supervisor' ? 2 : 3),
+      username: payload.username || payload.name?.toLowerCase().replace(' ', '.'),
+      email: payload.email || `${payload.username || 'user'}@mapo.com`,
+      password: payload.password || 'welcome123'
+    };
+    
+    if (isNew) {
+      return this.http.post<any>(`${this.base}/users`, backendPayload, { headers: this.headers }).pipe(
+        map(res => res.user || res)
+      );
+    } else {
+      return this.http.put<any>(`${this.base}/users/${payload.id}`, backendPayload, { headers: this.headers }).pipe(
+        map(res => res.user || res)
+      );
     }
-    const newGroup = { ...payload, id: 'g' + Date.now() } as Group;
-    this._mockGroups.push(newGroup);
-    return newGroup;
   }
 
-  private _simulateDeleteGroup(id: string): boolean {
-    this._mockGroups = this._mockGroups.filter(g => g.id !== id);
-    return true;
+  deleteEmployee(id: string): Observable<any> {
+    return this.http.delete(`${this.base}/users/${id}`, { headers: this.headers });
   }
 
-  private _simulateSaveEmployee(payload: Partial<Employee>): Employee {
-    const existing = this._mockEmployees.find(e => e.id === payload.id);
-    const groupName = this._mockGroups.find(g => g.id === payload.groupId)?.name;
-    if (existing) {
-      Object.assign(existing, { ...payload, groupName });
-      return existing;
-    }
-    const newEmp = { ...payload, id: 'e' + Date.now(), active: payload.active ?? true, groupName } as Employee;
-    this._mockEmployees.push(newEmp);
-    return newEmp;
+  clock(direction: 'in' | 'out'): Observable<any> {
+    return this.http.post<any>(`${this.base}/punches/clock-${direction}`, {}, { headers: this.headers }).pipe(
+      map(res => ({
+        timestamp: direction === 'in' ? res.punch.punch_in : res.punch.punch_out
+      }))
+    );
   }
 
-  private _simulateDeleteEmployee(id: string): boolean {
-    this._mockEmployees = this._mockEmployees.filter(e => e.id !== id);
-    return true;
+  moveShift(shiftId: string, payload: Partial<Shift>): Observable<any> {
+    const backendPayload = {
+      user_id: payload.empId,
+      shift_date: payload.start?.split('T')[0],
+      start_time: payload.start?.split('T')[1]?.substring(0, 5),
+      end_time: payload.end?.split('T')[1]?.substring(0, 5),
+      shift_type: payload.color === '#16a34a' ? 'descanso' : 'work'
+    };
+    return this.http.put(`${this.base}/shifts/${shiftId}`, backendPayload, { headers: this.headers });
   }
 
-  private fallback<T>(mock: T) { return (source: Observable<T>) => source.pipe(catchError(() => of(mock))); }
+  deleteShift(shiftId: string): Observable<any> {
+    return this.http.delete(`${this.base}/shifts/${shiftId}`, { headers: this.headers });
+  }
 
-  private mockSchedule(range: { from: string; to: string; group?: string }): ShiftDay[] {
-    const start = new Date(range.from);
+  bulkCreateShifts(shifts: Shift[]): Observable<any> {
+    const backendShifts = shifts.map(s => ({
+      userId: s.empId,
+      groupId: s.group,
+      shiftDate: s.start.split('T')[0],
+      startTime: s.start.split('T')[1].substring(0, 5),
+      endTime: s.end.split('T')[1].substring(0, 5),
+      shiftType: s.color === '#16a34a' ? 'descanso' : 'work'
+    }));
+    return this.http.post(`${this.base}/shifts/bulk`, { shifts: backendShifts }, { headers: this.headers });
+  }
+
+  listRequests(): Observable<ChangeRequest[]> {
+    return this.http.get<ChangeRequest[]>(`${this.base}/change-requests`, { headers: this.headers });
+  }
+
+  private mapShiftsToDays(shifts: any[], startDate: string): ShiftDay[] {
+    const start = new Date(startDate);
     const days: ShiftDay[] = [];
     for (let i = 0; i < 7; i++) {
-      const date = new Date(start);
-      date.setDate(start.getDate() + i);
-      const iso = date.toISOString().substring(0, 10);
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      const iso = d.toISOString().substring(0, 10);
       days.push({
         date: iso,
-        shifts: this._mockShifts.filter(s => s.start.startsWith(iso) && (range.group ? s.group === range.group : true))
+        shifts: (shifts || []).filter(s => s.shift_date === iso).map(s => ({
+          id: s.id,
+          empId: s.user_id,
+          agent: s.first_name + ' ' + s.last_name,
+          role: s.role_name,
+          group: s.group_id,
+          start: `${s.shift_date}T${s.start_time}`,
+          end: `${s.shift_date}T${s.end_time}`,
+          status: 'planned',
+          color: s.shift_type === 'descanso' ? '#16a34a' : '#0284c7' 
+        }))
       });
     }
     return days;

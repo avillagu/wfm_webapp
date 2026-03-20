@@ -2,12 +2,14 @@
   <div class="card">
     <p class="eyebrow">WFM MAPO</p>
     <h2>Acceso seguro</h2>
-    <p class="hint">Autenticación JWT con roles dinámicos.</p>
+    <p class="hint">Autenticación segura con JWT.</p>
 
     <form [formGroup]="form" (ngSubmit)="submit()">
+      <div class="error-msg" *ngIf="error">{{ error }}</div>
+
       <label>
-        Usuario / correo
-        <input type="text" placeholder="admin o usuario@empresa.com" formControlName="email" />
+        Usuario
+        <input type="text" placeholder="admin" formControlName="username" />
       </label>
 
       <label>
@@ -15,22 +17,11 @@
         <input type="password" placeholder="••••••" formControlName="password" />
       </label>
 
-      <div class="row">
-        <label>
-          Rol
-          <select formControlName="role">
-            <option value="admin">Administrador</option>
-            <option value="supervisor">Supervisor</option>
-            <option value="analyst">Analista</option>
-          </select>
-        </label>
-        <label>
-          Grupo
-          <input type="text" placeholder="CX-Norte" formControlName="group" />
-        </label>
-      </div>
-
-      <button type="submit" [disabled]="form.invalid">Ingresar</button>
+      <button type="submit" [disabled]="form.invalid || loading">
+        {{ loading ? 'Ingresando...' : 'Ingresar' }}
+      </button>
+      
+      <p class="sub-hint mt">Credenciales por defecto: admin / admin123</p>
     </form>
   </div>
 </div>
