@@ -171,6 +171,10 @@ export class ApiService {
     return this.http.post(`${this.base}/shifts/bulk`, { shifts: backendShifts }, { headers: this.headers });
   }
 
+  getActivePunch(): Observable<any> {
+    return this.http.get<any>(`${this.base}/punches/active`, { headers: this.headers });
+  }
+
   listRequests(): Observable<ChangeRequest[]> {
     return this.http.get<ChangeRequest[]>(`${this.base}/change-requests`, { headers: this.headers });
   }

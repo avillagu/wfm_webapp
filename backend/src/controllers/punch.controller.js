@@ -45,13 +45,17 @@ const clockIn = asyncHandler(async (req, res) => {
   // Create punch record
   const punch = await punchDAO.clockIn(req.user.id, shiftId, location);
 
-  // Emit socket event
-  emitToGroup(req.io, req.user.groupId, 'punch:updated', {
-    userId: req.user.id,
-    username: req.user.username,
-    action: 'clock_in',
-    timestamp: punch.punch_in
-  });
+  // Emit socket event (optional)
+  try {
+    if (req.io) {
+      emitToGroup(req.io, req.user.groupId, 'punch:updated', {
+        userId: req.user.id,
+        username: req.user.username,
+        action: 'clock_in',
+        timestamp: punch.punch_in
+      });
+    }
+  } catch(e) { /* socket not available */ }
 
   res.status(201).json({
     message: 'Clocked in successfully',
@@ -97,13 +101,17 @@ const clockOut = asyncHandler(async (req, res) => {
   // Clock out
   const updatedPunch = await punchDAO.clockOut(activePunch.id, location);
 
-  // Emit socket event
-  emitToGroup(req.io, req.user.groupId, 'punch:updated', {
-    userId: req.user.id,
-    username: req.user.username,
-    action: 'clock_out',
-    timestamp: updatedPunch.punch_out
-  });
+  // Emit socket event (optional)
+  try {
+    if (req.io) {
+      emitToGroup(req.io, req.user.groupId, 'punch:updated', {
+        userId: req.user.id,
+        username: req.user.username,
+        action: 'clock_out',
+        timestamp: updatedPunch.punch_out
+      });
+    }
+  } catch(e) { /* socket not available */ }
 
   res.json({
     message: 'Clocked out successfully',

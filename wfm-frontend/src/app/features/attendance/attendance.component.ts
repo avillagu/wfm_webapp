@@ -19,6 +19,17 @@ export class AttendanceComponent implements OnInit {
   constructor(private api: ApiService, public auth: AuthService) {}
 
   ngOnInit() {
+    // Load active punch for the current user (analysts)
+    this.api.getActivePunch().subscribe({
+      next: (punch: any) => {
+        if (punch && punch.punch_in && !punch.punch_out) {
+          this.status.set('En turno');
+          this.lastAction.set(punch.punch_in);
+        }
+      },
+      error: () => { /* no active punch */ }
+    });
+
     if (this.auth.role() === 'admin' || this.auth.role() === 'supervisor') {
       const today = new Date().toISOString().substring(0, 10);
       const now = new Date();

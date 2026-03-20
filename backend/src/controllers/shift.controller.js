@@ -124,13 +124,17 @@ const createShift = [
       createdBy: req.user.id
     });
 
-    // Emit socket event
-    emitToGroup(req.io, groupId, 'shift:updated', {
-      shiftId: shift.id,
-      action: 'created',
-      shift,
-      updatedBy: req.user.username
-    });
+    // Emit socket event (optional, may not have io attached)
+    try {
+      if (req.io) {
+        emitToGroup(req.io, groupId, 'shift:updated', {
+          shiftId: shift.id,
+          action: 'created',
+          shift,
+          updatedBy: req.user.username
+        });
+      }
+    } catch(e) { /* socket not available */ }
 
     res.status(201).json({
       message: 'Shift created successfully',
@@ -203,15 +207,19 @@ const createBulkShifts = asyncHandler(async (req, res) => {
   if (validatedShifts.length > 0) {
     createdShifts = await shiftDAO.createMany(validatedShifts);
 
-    // Emit socket events
-    const groupIds = [...new Set(validatedShifts.map(s => s.groupId))];
-    groupIds.forEach(groupId => {
-      emitToGroup(req.io, groupId, 'shift:updated', {
-        action: 'bulk_created',
-        count: createdShifts.length,
-        updatedBy: req.user.username
-      });
-    });
+    // Emit socket events (optional)
+    try {
+      if (req.io) {
+        const groupIds = [...new Set(validatedShifts.map(s => s.groupId))];
+        groupIds.forEach(groupId => {
+          emitToGroup(req.io, groupId, 'shift:updated', {
+            action: 'bulk_created',
+            count: createdShifts.length,
+            updatedBy: req.user.username
+          });
+        });
+      }
+    } catch(e) { /* socket not available */ }
   }
 
   res.status(201).json({
@@ -300,13 +308,17 @@ const updateShift = asyncHandler(async (req, res) => {
     shiftType
   });
 
-  // Emit socket event
-  emitToGroup(req.io, shift.group_id, 'shift:updated', {
-    shiftId: shift.id,
-    action: 'updated',
-    shift,
-    updatedBy: req.user.username
-  });
+  // Emit socket event (optional)
+  try {
+    if (req.io) {
+      emitToGroup(req.io, shift.group_id, 'shift:updated', {
+        shiftId: shift.id,
+        action: 'updated',
+        shift,
+        updatedBy: req.user.username
+      });
+    }
+  } catch(e) { /* socket not available */ }
 
   res.json({
     message: 'Shift updated successfully',
@@ -328,12 +340,16 @@ const deleteShift = asyncHandler(async (req, res) => {
     });
   }
 
-  // Emit socket event
-  emitToGroup(req.io, shift.group_id, 'shift:updated', {
-    shiftId: shift.id,
-    action: 'deleted',
-    updatedBy: req.user.username
-  });
+  // Emit socket event (optional)
+  try {
+    if (req.io) {
+      emitToGroup(req.io, shift.group_id, 'shift:updated', {
+        shiftId: shift.id,
+        action: 'deleted',
+        updatedBy: req.user.username
+      });
+    }
+  } catch(e) { /* socket not available */ }
 
   res.json({
     message: 'Shift deleted successfully',
