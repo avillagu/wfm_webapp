@@ -25,5 +25,3 @@ databases:
   # Managed PostgreSQL
   - name: mapo-wfm-db
     plan: free
-    databaseName: wfm_db
-    user: postgres
