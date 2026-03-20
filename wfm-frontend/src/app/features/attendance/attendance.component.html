@@ -64,9 +64,10 @@
         <span>
           <span class="status-pill" [ngClass]="{
             'turno': emp.currentStatus === 'En turno',
-            'descanso': emp.currentStatus === 'En descanso',
-            'bano': emp.currentStatus === 'En baño',
-            'fuera': emp.currentStatus === 'Fuera de turno'
+            'descanso': emp.currentStatus === 'Descanso programado',
+            'pendiente': emp.currentStatus === 'Turno pendiente',
+            'finalizado': emp.currentStatus === 'Turno finalizado',
+            'fuera': emp.currentStatus === 'Sin turno programado' || emp.currentStatus === 'Sin datos'
           }">{{ emp.currentStatus }}</span>
         </span>
         <span class="time">{{ emp.timeInStatus }}</span>

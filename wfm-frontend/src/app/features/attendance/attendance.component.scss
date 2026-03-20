@@ -47,7 +47,8 @@
     padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;
     &.turno { background: #e0f2fe; color: #0369a1; }
     &.descanso { background: #dcfce7; color: #16a34a; }
-    &.bano { background: #fef9c3; color: #ca8a04; }
+    &.pendiente { background: #fef9c3; color: #ca8a04; }
+    &.finalizado { background: #ede9fe; color: #7c3aed; }
     &.fuera { background: #f1f5f9; color: #475569; }
   }
 }

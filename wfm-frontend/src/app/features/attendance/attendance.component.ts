@@ -20,14 +20,62 @@ export class AttendanceComponent implements OnInit {
 
   ngOnInit() {
     if (this.auth.role() === 'admin' || this.auth.role() === 'supervisor') {
+      const today = new Date().toISOString().substring(0, 10);
+      const now = new Date();
+      const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+      // Get employees AND today's schedule in parallel
       this.api.listEmployees().subscribe(emps => {
-        const statuses = ['En turno', 'En descanso', 'En baño', 'Fuera de turno'];
-        const list = emps.map(e => ({
-          ...e,
-          currentStatus: statuses[Math.floor(Math.random() * statuses.length)],
-          timeInStatus: Math.floor(Math.random() * 120) + ' min'
-        }));
-        this.employeesStatus.set(list);
+        this.api.getSchedule({ from: today, to: today }).subscribe({
+          next: (days) => {
+            const todayShifts = days.length > 0 ? days[0].shifts : [];
+            
+            const list = emps.map(e => {
+              const shift = todayShifts.find(s => s.empId === e.id);
+              let currentStatus = 'Sin turno programado';
+              let timeInStatus = '-';
+              
+              if (shift) {
+                const shiftStart = shift.start.split('T')[1]?.substring(0, 5) || '00:00';
+                const shiftEnd = shift.end.split('T')[1]?.substring(0, 5) || '23:59';
+                
+                if (shift.color === '#16a34a') {
+                  currentStatus = 'Descanso programado';
+                  timeInStatus = `${shiftStart} - ${shiftEnd}`;
+                } else if (currentTime >= shiftStart && currentTime <= shiftEnd) {
+                  currentStatus = 'En turno';
+                  // Calculate mins since shift started
+                  const startMins = parseInt(shiftStart.split(':')[0]) * 60 + parseInt(shiftStart.split(':')[1]);
+                  const nowMins = now.getHours() * 60 + now.getMinutes();
+                  const elapsed = nowMins - startMins;
+                  timeInStatus = `${elapsed} min (${shiftStart} - ${shiftEnd})`;
+                } else if (currentTime < shiftStart) {
+                  currentStatus = 'Turno pendiente';
+                  timeInStatus = `Inicia a las ${shiftStart}`;
+                } else {
+                  currentStatus = 'Turno finalizado';
+                  timeInStatus = `Terminó a las ${shiftEnd}`;
+                }
+              }
+
+              return {
+                ...e,
+                currentStatus,
+                timeInStatus
+              };
+            });
+            this.employeesStatus.set(list);
+          },
+          error: () => {
+            // If can't load schedule, show employees without status
+            const list = emps.map(e => ({
+              ...e,
+              currentStatus: 'Sin datos',
+              timeInStatus: '-'
+            }));
+            this.employeesStatus.set(list);
+          }
+        });
       });
     }
   }

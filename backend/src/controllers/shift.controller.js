@@ -154,9 +154,9 @@ const createBulkShifts = asyncHandler(async (req, res) => {
     });
   }
 
-  // Validate each shift
+  // Validate each shift — skip invalid ones instead of rejecting all
   const validatedShifts = [];
-  const violations = [];
+  const warnings = [];
 
   for (const shiftData of shifts) {
     // Check overlap
@@ -168,15 +168,14 @@ const createBulkShifts = asyncHandler(async (req, res) => {
     );
 
     if (overlaps.length > 0) {
-      violations.push({
+      warnings.push({
         shift: shiftData,
-        error: 'Overlaps with existing shift',
-        overlaps
+        error: 'Overlaps with existing shift — skipped'
       });
       continue;
     }
 
-    // WFM validation
+    // WFM validation — warn but still allow
     const validation = await wfmRulesDAO.validateShift(
       shiftData.userId,
       shiftData.groupId,
@@ -186,12 +185,12 @@ const createBulkShifts = asyncHandler(async (req, res) => {
     );
 
     if (!validation.valid) {
-      violations.push({
+      // Log the warning but still create the shift
+      warnings.push({
         shift: shiftData,
-        error: 'WFM rule violations',
+        warning: 'WFM rule warning — shift created anyway',
         violations: validation.violations
       });
-      continue;
     }
 
     validatedShifts.push({
@@ -200,30 +199,26 @@ const createBulkShifts = asyncHandler(async (req, res) => {
     });
   }
 
-  if (violations.length > 0) {
-    return res.status(400).json({
-      error: 'Some shifts have violations',
-      code: 'WFM_VIOLATION',
-      violations
+  let createdShifts = [];
+  if (validatedShifts.length > 0) {
+    createdShifts = await shiftDAO.createMany(validatedShifts);
+
+    // Emit socket events
+    const groupIds = [...new Set(validatedShifts.map(s => s.groupId))];
+    groupIds.forEach(groupId => {
+      emitToGroup(req.io, groupId, 'shift:updated', {
+        action: 'bulk_created',
+        count: createdShifts.length,
+        updatedBy: req.user.username
+      });
     });
   }
 
-  // Create all shifts
-  const createdShifts = await shiftDAO.createMany(validatedShifts);
-
-  // Emit socket events
-  const groupIds = [...new Set(validatedShifts.map(s => s.groupId))];
-  groupIds.forEach(groupId => {
-    emitToGroup(req.io, groupId, 'shift:updated', {
-      action: 'bulk_created',
-      count: createdShifts.length,
-      updatedBy: req.user.username
-    });
-  });
-
   res.status(201).json({
     message: `${createdShifts.length} shifts created successfully`,
-    shifts: createdShifts
+    shifts: createdShifts,
+    warnings: warnings.length > 0 ? warnings : undefined,
+    skipped: warnings.length
   });
 });
 

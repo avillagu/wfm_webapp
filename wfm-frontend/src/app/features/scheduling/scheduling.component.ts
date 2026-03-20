@@ -287,8 +287,17 @@ export class SchedulingComponent implements OnInit {
       
       const proceedWithCreate = () => {
         this.api.bulkCreateShifts(newShifts).subscribe({
-          next: () => this.showBulkModal.set(false),
-          error: (err) => console.error("Error salvando turnos masivos:", err)
+          next: () => {
+            this.showBulkModal.set(false);
+            // Reload from server to reflect what was actually saved
+            this.load();
+          },
+          error: (err) => {
+            console.error("Error salvando turnos masivos:", err);
+            // Reload from server to show actual state
+            this.load();
+            this.showBulkModal.set(false);
+          }
         });
       };
 
@@ -296,7 +305,8 @@ export class SchedulingComponent implements OnInit {
         forkJoin(deleteOps).subscribe({
           next: () => proceedWithCreate(),
           error: (err) => {
-            console.error("Error en eliminaciones previas, abortando creación masiva:", err);
+            console.error("Error en eliminaciones previas:", err);
+            this.load();
           }
         });
       } else {
