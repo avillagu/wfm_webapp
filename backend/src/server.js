@@ -91,14 +91,26 @@ app.get('/api/setup-database', async (req, res) => {
   try {
     const fs = require('fs');
     const path = require('path');
+    const bcrypt = require('bcrypt');
+    
     const initSqlPath = path.join(__dirname, '..', 'database', 'init.sql');
     const initSql = fs.readFileSync(initSqlPath, 'utf8');
     
+    // 1. Run the base SQL (creates tables, roles, and initial admin with whatever hash)
     await pool.query(initSql);
+    
+    // 2. FORCE the admin password to 'admin123' using the live bcrypt
+    const saltRounds = 10;
+    const newHash = await bcrypt.hash('admin123', saltRounds);
+    
+    await pool.query('UPDATE users SET password_hash = $1 WHERE username = $2', [newHash, 'admin']);
+    
+    const userResult = await pool.query('SELECT COUNT(*) FROM users');
     
     res.json({ 
       success: true, 
-      message: 'Base de datos inicializada correctamente.',
+      message: 'Base de datos inicializada y usuario ADMIN reseteado.',
+      userCount: userResult.rows[0].count,
       credentials: 'admin / admin123'
     });
   } catch (err) {
