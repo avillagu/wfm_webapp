@@ -50,12 +50,15 @@ export class ApiService {
 
   saveGroup(payload: Partial<Group>): Observable<Group> {
     const isNew = !payload.id;
+    // Auto-generate code from name if not provided
+    const code = (payload as any).code || payload.name?.substring(0, 10).toUpperCase().replace(/\s+/g, '-') || 'GRP';
+    const body = { ...payload, code };
     if (isNew) {
-      return this.http.post<any>(`${this.base}/groups`, payload, { headers: this.headers }).pipe(
+      return this.http.post<any>(`${this.base}/groups`, body, { headers: this.headers }).pipe(
         map(res => res.group || res)
       );
     } else {
-      return this.http.put<any>(`${this.base}/groups/${payload.id}`, payload, { headers: this.headers }).pipe(
+      return this.http.put<any>(`${this.base}/groups/${payload.id}`, body, { headers: this.headers }).pipe(
         map(res => res.group || res)
       );
     }
