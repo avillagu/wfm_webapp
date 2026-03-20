@@ -1,0 +1,31 @@
+TAREA
+
+NOMBRE: Core API Backend y SQL Nativo WFM
+
+DESCRIPCIÓN:
+Diseño DDL transaccional y Programación de la API de Controlador de Negocios Node.Js. Creador del Motor Lógico Inteligente y los esquemas Socket para refresco simultáneo de clientes web.
+
+AGENTE RESPONSABLE:
+Backend Developer
+
+INPUTS:
+01_requirements.txt, Reglas del limite horario global.
+
+OUTPUTS ESPERADOS:
+Directorio Backend con Servidor listo en Express / Node, y archivo sql nativo (ej. Init.sql).
+
+PASOS A REALIZAR:
+1. Diseñar e Implementar Scripts SQL Nativos de la Base de datos Postgres para Empleados, Roles, Auth, y Turnos históricos (Time-Punched).
+2. API Core REST: Creadores ABM, Inicio de sesión, Reportes de TxT text/plain format.
+3. API WFM Engine: Middlewares inyectados en Endpoint de Creación Calendarios que detenga o avise si los conteas de hora en la base superan topes de horas predeterminados / Mes.
+4. Implementación Socket IO emisor sobre los metodos update/insert de Shifts y Punches.
+
+CRITERIOS DE ACEPTACIÓN:
+- Strictamente NodeJS plano o Framework Express/Nest pero con Queries Nativos a base el package `pg`. CERO instaladores Prisma.
+- Sanitización total a pruebas SQLi por ser una app de la intranet de la empresa.
+
+DEPENDENCIAS:
+- Independiente. Es la base técnica de todos.
+
+ESTADO:
+[Pendiente]

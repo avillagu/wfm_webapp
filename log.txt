@@ -1,0 +1,10 @@
+[2026-03-19] Inicializado proyecto Angular 17 `wfm-frontend` (routing, SCSS, sin git).
+[2026-03-19] Configurado tema global azul/blanco, tipografías, budgets de estilos y .npmrc local.
+[2026-03-19] Instaladas dependencias clave: @angular/cdk, socket.io-client.
+[2026-03-19] Implementado AuthService con guard/interceptor, layout Shell y rutas protegidas.
+[2026-03-19] Construidas vistas: Login, Dashboard, Scheduling Drag&Drop, Time & Attendance, Solicitudes 3 pasos.
+[2026-03-19] Servicios REST/WebSocket y ScheduleService con emisión de eventos; build `npm run build` exitoso.
+[2026-03-19] Añadido módulo Administración (ABM de grupos y empleados) y vista de plantilla de empleados por grupo.
+[2026-03-19] Calendario ajustado para asignar turnos a empleados reales del grupo seleccionado.
+[2026-03-19] Login flexibilizado para usuario `admin`; build `npm run build` verificado.
+[2026-03-19] DevOps: Creado Dockerfile frontend, Docker Compose orquestado (Postgres/Back/Front) y Script de auto-activación .bat. Se documentó levantamiento en README.

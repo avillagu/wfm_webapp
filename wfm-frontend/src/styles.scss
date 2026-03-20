@@ -1,0 +1,73 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;600&display=swap');
+
+:root {
+  --blue-50: #f2f7fd;
+  --blue-100: #e3edf7;
+  --blue-500: #0b84ff;
+  --blue-700: #0f4d8a;
+  --blue-900: #0b2f55;
+  --surface: #f6f9ff;
+  --ink: #0c2136;
+  --card-shadow: 0 18px 40px rgba(8, 59, 102, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: 'Space Grotesk', 'Manrope', 'Segoe UI', sans-serif;
+  min-height: 100vh;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+}
+
+p {
+  margin: 0;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.9px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--blue-500);
+}
+
+.hint {
+  color: #5a6c83;
+  font-size: 13px;
+}
+
+.label {
+  font-weight: 700;
+  color: var(--blue-900);
+}
+
+.value {
+  font-weight: 700;
+  color: var(--blue-900);
+}
+
+button {
+  font-family: inherit;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--blue-500), var(--blue-700));
+  border-radius: 12px;
+}

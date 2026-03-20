@@ -1,0 +1,123 @@
+.shell {
+  display: grid;
+  grid-template-columns: 270px 1fr;
+  min-height: 100vh;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.sidebar {
+  background: #061e38;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 24px;
+  gap: 16px;
+  box-shadow: 8px 0 24px rgba(0, 0, 0, 0.2);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+
+.brand .dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #0088ff;
+  box-shadow: 0 0 12px rgba(0, 136, 255, 0.8);
+}
+
+.brand .title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+}
+
+.brand .small {
+  text-transform: uppercase;
+  font-size: 11px;
+  color: #88aacc;
+  font-weight: 600;
+  margin: 0;
+}
+
+nav {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  text-decoration: none;
+  color: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.nav-item .label {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+  color: #ffffff;
+}
+
+.nav-item .hint {
+  margin: 4px 0 0;
+  color: #88aacc;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateX(5px);
+  border-color: #0088ff;
+}
+
+.nav-item.active {
+  background: #0088ff;
+  border-color: #0088ff;
+  box-shadow: 0 4px 15px rgba(0, 136, 255, 0.4);
+  
+  .hint { color: rgba(255,255,255,0.8); }
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 20px;
+}
+
+.sidebar-footer .hint {
+  margin-bottom: 12px;
+  color: #88aacc;
+  font-size: 12px;
+}
+
+.sidebar-footer button {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  
+  &:hover { background: rgba(255,255,255,0.2); }
+}
+
+.content {
+  padding: 28px 32px;
+}

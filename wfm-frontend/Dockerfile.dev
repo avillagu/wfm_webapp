@@ -1,0 +1,24 @@
+FROM node:18-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Install Angular CLI globally
+RUN npm install -g @angular/cli@17.3.17
+
+# Copy package.json and package-lock.json
+COPY package*.json ./
+
+# Install dependencies (will be cached unless package.json changes)
+RUN npm install --legacy-peer-deps
+
+# Copy the rest of the application
+COPY . .
+
+# Expose port (Angular's default)
+EXPOSE 4200
+
+# Start Angular in development mode
+# --host 0.0.0.0 is crucial to access it from the host machine
+# --poll 2000 is for file system change watch to work inside containers
+CMD ["npm", "start", "--", "--host", "0.0.0.0", "--poll", "2000"]

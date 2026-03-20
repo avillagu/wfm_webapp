@@ -1,0 +1,42 @@
+<div class="page-header">
+  <p class="eyebrow">Exportación de Datos</p>
+  <h2>Reportes y Exportes</h2>
+</div>
+
+<div class="reports-grid">
+  <!-- Reporte Asistencias -->
+  <div class="report-card">
+    <div class="icon">⏱</div>
+    <div class="info">
+      <h3>Asistencias y Clock-ins</h3>
+      <p>Historial detallado de estados del personal (en turno, descansos, etc.)</p>
+    </div>
+    <div class="actions">
+      <button class="btn solid primary" (click)="export('Asistencias')">Descargar .xlsx</button>
+    </div>
+  </div>
+
+  <!-- Reporte Turnos -->
+  <div class="report-card">
+    <div class="icon">📅</div>
+    <div class="info">
+      <h3>Turnos Programados</h3>
+      <p>Reporte de horarios, cambios y programación masiva consolidada.</p>
+    </div>
+    <div class="actions">
+      <button class="btn solid primary" (click)="export('Turnos')">Descargar .xlsx</button>
+    </div>
+  </div>
+
+  <!-- Novedades -->
+  <div class="report-card">
+    <div class="icon">📋</div>
+    <div class="info">
+      <h3>Solicitudes y Novedades</h3>
+      <p>Solicitudes aprobadas, rechazadas o pendientes por mes o por empleado.</p>
+    </div>
+    <div class="actions">
+      <button class="btn solid primary" (click)="export('Novedades')">Descargar .xlsx</button>
+    </div>
+  </div>
+</div>

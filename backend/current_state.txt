@@ -1,0 +1,263 @@
+# MAPO WFM Backend - Current State
+
+**Last Updated:** 2026-03-19
+**Version:** 1.0.0
+
+## Module Status
+
+### ✅ Completed Modules
+
+#### 1. Database Layer
+- **File:** `database/init.sql`
+- **Status:** Complete
+- **Description:** PostgreSQL native DDL schema with all required tables:
+  - `roles` - Base role definitions (ADMIN, SUPERVISOR, ANALYST)
+  - `permissions` - Granular permission definitions
+  - `role_permissions` - Many-to-many role-permission mapping
+  - `groups` - Employee groups/departments
+  - `users` - Employee accounts with bcrypt password hashing
+  - `wfm_rules` - Workforce intelligence rules (hour limits, Sunday counts, rest days)
+  - `shifts` - Scheduled shifts with overlap constraints
+  - `punches` - Time & Attendance records (clock-in/clock-out)
+  - `change_requests` - 3-step approval workflow
+  - `notifications` - Real-time notification storage
+  - `audit_log` - System change tracking
+  - Views: `v_active_shifts`, `v_monthly_sundays_count`, `v_weekly_hours`, `v_monthly_hours`, `v_pending_change_requests`
+
+#### 2. Data Access Objects (DAO)
+- **Directory:** `src/dao/`
+- **Status:** Complete
+- **Files:**
+  - `user.dao.js` - User CRUD with parameterized queries
+  - `shift.dao.js` - Shift management with overlap detection
+  - `wfmRules.dao.js` - WFM intelligence engine with rule validation
+  - `punch.dao.js` - Time & Attendance operations
+  - `changeRequest.dao.js` - Change request workflow
+
+#### 3. Middleware Layer
+- **Directory:** `src/middleware/`
+- **Status:** Complete
+- **Files:**
+  - `auth.middleware.js` - JWT authentication, RBAC guards, group access control
+  - `errorHandler.js` - Centralized error handling with PostgreSQL error codes
+  - `validation.js` - Request validation utilities
+
+#### 4. Services
+- **Directory:** `src/services/`
+- **Status:** Complete
+- **Files:**
+  - `socket.service.js` - Socket.IO real-time communication with authentication
+
+#### 5. Controllers
+- **Directory:** `src/controllers/`
+- **Status:** Complete
+- **Files:**
+  - `auth.controller.js` - Login, token refresh, password management
+  - `user.controller.js` - User CRUD operations
+  - `group.controller.js` - Group management
+  - `shift.controller.js` - Shift/Calendar CRUD with WFM validation
+  - `punch.controller.js` - Clock-in/Clock-out endpoints
+  - `changeRequest.controller.js` - 3-step approval workflow
+  - `rule.controller.js` - WFM rules management
+  - `report.controller.js` - Text/plain exportable reports
+
+#### 6. Routes
+- **Directory:** `src/routes/`
+- **Status:** Complete
+- **Files:**
+  - `auth.routes.js` - `/api/auth/*`
+  - `user.routes.js` - `/api/users/*`
+  - `group.routes.js` - `/api/groups/*`
+  - `shift.routes.js` - `/api/shifts/*`
+  - `punch.routes.js` - `/api/punches/*`
+  - `changeRequest.routes.js` - `/api/change-requests/*`
+  - `rule.routes.js` - `/api/rules/*`
+  - `report.routes.js` - `/api/reports/*`
+
+#### 7. Utilities
+- **Directory:** `src/utils/`
+- **Status:** Complete
+- **Files:**
+  - `logger.js` - Centralized logging with levels
+  - `token.js` - JWT token generation and verification
+
+---
+
+## API Endpoints Summary
+
+### Authentication
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/api/auth/login` | User login | No |
+| POST | `/api/auth/refresh` | Refresh access token | No |
+| GET | `/api/auth/me` | Get current user profile | Yes |
+| PUT | `/api/auth/change-password` | Change password | Yes |
+
+### Users
+| Method | Endpoint | Description | Permission |
+|--------|----------|-------------|------------|
+| GET | `/api/users` | List users (paginated) | users:READ |
+| GET | `/api/users/:id` | Get user by ID | users:READ |
+| GET | `/api/users/group/:groupId` | Get users by group | users:READ |
+| POST | `/api/users` | Create user | users:CREATE |
+| PUT | `/api/users/:id` | Update user | users:UPDATE |
+| DELETE | `/api/users/:id` | Delete user (soft) | users:DELETE |
+
+### Groups
+| Method | Endpoint | Description | Permission |
+|--------|----------|-------------|------------|
+| GET | `/api/groups` | List all groups | groups:READ |
+| GET | `/api/groups/:id` | Get group by ID | groups:READ |
+| POST | `/api/groups` | Create group | groups:CREATE |
+| PUT | `/api/groups/:id` | Update group | groups:UPDATE |
+| DELETE | `/api/groups/:id` | Delete group (soft) | groups:DELETE |
+
+### Shifts
+| Method | Endpoint | Description | Permission |
+|--------|----------|-------------|------------|
+| GET | `/api/shifts/calendar` | Get calendar shifts | shifts:READ |
+| GET | `/api/shifts/user/:userId` | Get user shifts | shifts:READ |
+| GET | `/api/shifts/:id` | Get shift by ID | shifts:READ |
+| GET | `/api/shifts/stats` | Get shift statistics | shifts:READ |
+| POST | `/api/shifts` | Create shift | shifts:CREATE |
+| POST | `/api/shifts/bulk` | Create multiple shifts | shifts:CREATE |
+| PUT | `/api/shifts/:id` | Update shift | shifts:UPDATE |
+| DELETE | `/api/shifts/:id` | Delete shift (soft) | shifts:DELETE |
+
+### Punches (Time & Attendance)
+| Method | Endpoint | Description | Permission |
+|--------|----------|-------------|------------|
+| POST | `/api/punches/clock-in` | Clock in | - |
+| POST | `/api/punches/clock-out` | Clock out | - |
+| GET | `/api/punches/active` | Get active punch | - |
+| GET | `/api/punches` | Get punches by date range | punches:READ |
+| GET | `/api/punches/today/summary` | Get today's summary | punches:READ |
+| PUT | `/api/punches/:id/status` | Update punch status | punches:UPDATE |
+
+### Change Requests
+| Method | Endpoint | Description | Permission |
+|--------|----------|-------------|------------|
+| GET | `/api/change-requests/my-requests` | Get my requests | - |
+| GET | `/api/change-requests/pending-review` | Get pending for review | change_requests:READ |
+| GET | `/api/change-requests/:id` | Get request by ID | - |
+| GET | `/api/change-requests/stats` | Get statistics | change_requests:READ |
+| POST | `/api/change-requests` | Create request | change_requests:CREATE |
+| POST | `/api/change-requests/:id/target-response` | Target user response | change_requests:CREATE |
+| POST | `/api/change-requests/:id/review` | Final approval | change_requests:APPROVE |
+| DELETE | `/api/change-requests/:id` | Cancel request | change_requests:CREATE |
+
+### WFM Rules
+| Method | Endpoint | Description | Permission |
+|--------|----------|-------------|------------|
+| GET | `/api/rules` | List all rules | rules:READ |
+| GET | `/api/rules/my-rules` | Get applicable rules | rules:READ |
+| GET | `/api/rules/:id` | Get rule by ID | rules:READ |
+| POST | `/api/rules` | Create rule | rules:CREATE |
+| PUT | `/api/rules/:id` | Update rule | rules:UPDATE |
+| DELETE | `/api/rules/:id` | Delete rule (soft) | rules:DELETE |
+| POST | `/api/rules/validate-shift` | Validate shift | shifts:CREATE |
+
+### Reports
+| Method | Endpoint | Description | Permission |
+|--------|----------|-------------|------------|
+| GET | `/api/reports/dashboard` | Dashboard summary | reports:EXPORT |
+| GET | `/api/reports/shifts` | Shift report (text/plain) | reports:EXPORT |
+| GET | `/api/reports/attendance` | Attendance report (text/plain) | reports:EXPORT |
+| GET | `/api/reports/change-requests` | Change requests report (text/plain) | reports:EXPORT |
+
+---
+
+## Socket.IO Events
+
+### Client → Server
+| Event | Description | Payload |
+|-------|-------------|---------|
+| `shift:update` | Broadcast shift change | `{ shiftId, action, groupId, shift }` |
+| `punch:action` | Broadcast punch action | `{ action }` |
+| `changeRequest:action` | Notify change request | `{ type, targetUserId, requestId, message }` |
+
+### Server → Client
+| Event | Description | Payload |
+|-------|-------------|---------|
+| `shift:updated` | Shift created/updated/deleted | `{ shiftId, action, shift, updatedBy }` |
+| `punch:updated` | Punch action occurred | `{ userId, action, timestamp }` |
+| `changeRequest:notification` | Change request notification | `{ type, message, requestId }` |
+| `changeRequest:pending` | New request for review | `{ requestId, type, requesterId }` |
+| `user:online` | User online status change | `{ userId, username, online }` |
+
+---
+
+## WFM Intelligence Engine
+
+### Rule Types
+| Rule Type | Description | Default Value |
+|-----------|-------------|---------------|
+| `MAX_HOURS_WEEK` | Maximum working hours per week | 48 hours |
+| `MAX_HOURS_MONTH` | Maximum working hours per month | 192 hours |
+| `MAX_SUNDAYS_MONTH` | Maximum Sundays to work in a month | 3 |
+| `MIN_REST_DAYS_WEEK` | Minimum rest days required per week | 1 |
+| `MIN_REST_HOURS` | Minimum rest hours between shifts | 8 hours |
+
+### Validation Flow
+1. Every shift creation/update triggers WFM validation
+2. Engine checks all applicable rules (global, group-specific, user-specific)
+3. Returns violations array with detailed messages
+4. Shift is rejected if any violation exists
+5. Warnings are returned for informational purposes
+
+---
+
+## Security Features
+
+- ✅ SQL Injection Protection (parameterized queries)
+- ✅ JWT Authentication with configurable expiration
+- ✅ RBAC (Role-Based Access Control)
+- ✅ Group-level data isolation for Analysts
+- ✅ bcrypt password hashing (configurable cost factor)
+- ✅ Helmet.js security headers
+- ✅ CORS configuration
+- ✅ Rate limiting
+- ✅ Input validation
+- ✅ Audit logging
+
+---
+
+## Pending Tasks
+
+- [ ] Unit tests for DAO layer
+- [ ] Integration tests for API endpoints
+- [ ] Load testing for Socket.IO
+- [ ] API documentation (Swagger/OpenAPI)
+- [ ] Docker Compose production configuration
+- [ ] CI/CD pipeline configuration
+
+---
+
+## How to Run
+
+### Development
+```bash
+cd backend
+npm install
+cp .env.example .env
+# Edit .env with your configuration
+npm run dev
+```
+
+### Initialize Database
+```bash
+npm run init-db
+```
+
+### Docker
+```bash
+docker-compose up -d
+```
+
+### Access
+- API: http://localhost:3000
+- Health: http://localhost:3000/health
+
+### Default Credentials
+- Username: `admin`
+- Password: `admin123`

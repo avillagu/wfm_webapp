@@ -1,0 +1,77 @@
+<div class="page-header">
+  <p class="eyebrow">Seguimiento</p>
+  <h2>Asistencias</h2>
+</div>
+
+<!-- ======================= -->
+<!-- EMPLEADO VIEW -->
+<!-- ======================= -->
+<ng-container *ngIf="auth.role() === 'analyst'">
+  <div class="card status-panel">
+    <div class="current-state" [ngClass]="{
+      'turno': status() === 'En turno',
+      'descanso': status() === 'En descanso',
+      'bano': status() === 'En baño',
+      'fuera': status() === 'Fuera de turno'
+    }">
+      <h3>{{ status() }}</h3>
+      <p *ngIf="lastAction()">Desde {{ lastAction() | date: 'hh:mm a' }}</p>
+      <p *ngIf="!lastAction()">Actualmente desconectado</p>
+    </div>
+
+    <div class="action-grid">
+      <button class="btn btn-punch turno" [disabled]="status() === 'En turno'" (click)="changeStatus('En turno')">
+        En turno
+      </button>
+      <button class="btn btn-punch descanso" [disabled]="status() === 'En descanso'" (click)="changeStatus('En descanso')">
+        En descanso
+      </button>
+      <button class="btn btn-punch bano" [disabled]="status() === 'En baño'" (click)="changeStatus('En baño')">
+        En baño
+      </button>
+      <button class="btn btn-punch fuera" [disabled]="status() === 'Fuera de turno'" (click)="changeStatus('Fuera de turno')">
+        Fuera de turno (Salir)
+      </button>
+    </div>
+  </div>
+</ng-container>
+
+<!-- ======================= -->
+<!-- ADMIN / SUPERVISOR VIEW-->
+<!-- ======================= -->
+<ng-container *ngIf="auth.role() !== 'analyst'">
+  <div class="admin-panel mt">
+    <div class="panel-head">
+      <div>
+        <h3 class="section-title">Monitor de Asistencias</h3>
+        <p class="section-sub">Estado actual de todo el personal</p>
+      </div>
+      <button class="btn outline sm">Exportar Excel</button>
+    </div>
+    
+    <div class="table-container mt">
+      <div class="th-row">
+        <span>Colaborador</span>
+        <span>Rol</span>
+        <span>Grupo</span>
+        <span>Estado Actual</span>
+        <span>Tiempo en estado</span>
+      </div>
+      <div class="tr-row" *ngFor="let emp of employeesStatus()">
+        <span class="strong">{{ emp.name }}</span>
+        <span><span class="badge">{{ emp.role | titlecase }}</span></span>
+        <span>{{ emp.groupName || emp.groupId }}</span>
+        <span>
+          <span class="status-pill" [ngClass]="{
+            'turno': emp.currentStatus === 'En turno',
+            'descanso': emp.currentStatus === 'En descanso',
+            'bano': emp.currentStatus === 'En baño',
+            'fuera': emp.currentStatus === 'Fuera de turno'
+          }">{{ emp.currentStatus }}</span>
+        </span>
+        <span class="time">{{ emp.timeInStatus }}</span>
+      </div>
+      <div class="empty" *ngIf="!employeesStatus().length">No hay datos para mostrar.</div>
+    </div>
+  </div>
+</ng-container>

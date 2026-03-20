@@ -1,0 +1,27 @@
+<div class="header">
+  <div>
+    <p class="eyebrow">Flujo 3 pasos</p>
+    <h2>Cambios y novedades</h2>
+    <p class="hint">Solicitud → Contraparte → Aprobación final.</p>
+  </div>
+</div>
+
+<div class="list">
+  <div class="item" *ngFor="let req of requests$ | async">
+    <div class="meta">
+      <p class="id">{{ req.id }}</p>
+      <p class="employee">{{ req.employee }}</p>
+      <p class="badge">{{ req.type | titlecase }}</p>
+    </div>
+    <div class="steps">
+      <div class="step" *ngFor="let step of req.steps" [attr.data-status]="step.status">
+        <span class="dot"></span>
+        <div>
+          <p class="label">{{ step.label }}</p>
+          <p class="hint">Responsable: {{ step.owner }}</p>
+        </div>
+      </div>
+    </div>
+    <p class="timestamp">Creado {{ req.submittedAt | date: 'short' }}</p>
+  </div>
+</div>

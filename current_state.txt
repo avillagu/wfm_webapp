@@ -1,0 +1,15 @@
+Fecha: 2026-03-19
+- Workspace Angular 17 en `wfm-frontend` con Shell Corporativo listo.
+- Backend NodeJS + Express con Native PG driver conectado.
+- Base de Datos PostgreSQL 15 configurada con Init.sql (Seeding Automático).
+- Contenerización Full: Docker Compose + Dockerfile.dev (Front/Back) terminados.
+- 'One-Click' Experience: Script `start_project.bat` y README.md documentado para el Director.
+- Pendientes: Refinar endpoints reales y WebSockets.
+
+Estado Frontend (Angular 17):
+- Layout corporativo Azul/Blanco con Shell y tipografía Space Grotesk/Manrope.
+- Autenticación flexible (acepta usuario admin sin formato email), guard e interceptor JWT.
+- Módulos listos: Dashboard, Calendario Drag&Drop por empleado real, Time & Attendance, Solicitudes 3 pasos.
+- Nuevo módulo de Administración (ABM de Grupos y Empleados con creación/edición).
+- Servicios REST/Socket iniciales con fallbacks; build `npm run build` exitoso.
+- Pendiente: sustituir mocks por endpoints reales y cablear reglas WFM en tiempo real.

@@ -1,0 +1,79 @@
+<!-- ══════════════════════════════════
+     TOP METRICS
+══════════════════════════════════ -->
+<div class="grid" *ngIf="metrics$ | async as m">
+  <div class="card metric">
+    <p class="label">In Clock</p>
+    <h3>{{ m.onClock }}</h3>
+    <p class="hint">Colaboradores en turno</p>
+  </div>
+  <div class="card metric">
+    <p class="label">Out Clock</p>
+    <h3>{{ m.offClock }}</h3>
+    <p class="hint">Fuera de turno</p>
+  </div>
+  <div class="card metric clickable" (click)="goToRequests()">
+    <p class="label">Solicitudes</p>
+    <h3>{{ m.pendingRequests }}</h3>
+    <p class="hint">Pendientes de aprobar <span>&rarr;</span></p>
+  </div>
+  <div class="card metric alert clickable" (click)="showAlertsModal = true">
+    <p class="label">Alertas</p>
+    <h3>{{ realAlerts.length }}</h3>
+    <p class="hint">Choques de reglas WFM <span>&rarr;</span></p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     RBAC: ROLE PERMISSIONS EDITOR
+══════════════════════════════════ -->
+<div class="panel">
+  <div class="panel-head">
+    <div>
+      <p class="eyebrow">Configuración RBAC</p>
+      <h3>Visibilidad y Permisos por Rol</h3>
+      <p class="sub">El administrador puede modificar las acciones disponibles para cada rol. Los cambios aplican en tiempo real.</p>
+    </div>
+    <button class="btn solid primary" (click)="savePermissions()">Guardar cambios</button>
+  </div>
+
+  <table class="perm-table">
+    <thead>
+      <tr>
+        <th>Acción</th>
+        <th>Analista</th>
+        <th>Supervisor</th>
+        <th>Admin</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let p of permissions; let i = index">
+        <td>{{ p.label }}</td>
+        <td class="center"><input type="checkbox" [(ngModel)]="permissions[i].analyst" [disabled]="p.locked" /></td>
+        <td class="center"><input type="checkbox" [(ngModel)]="permissions[i].supervisor" [disabled]="p.locked" /></td>
+        <td class="center"><input type="checkbox" [(ngModel)]="permissions[i].admin" [disabled]="true" checked class="fixed" /></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Modal Alertas -->
+<div class="modal-overlay" *ngIf="showAlertsModal" (click)="showAlertsModal = false">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <h3>Alertas Recientes</h3>
+    <p class="sub">Conflictos y errores detectados por el motor de validación WFM.</p>
+    <div class="alerts-list mt">
+      <div class="alert-item" *ngFor="let a of realAlerts" [ngClass]="a.type">
+        <div class="alert-icon">{{ a.type === 'danger' ? '✖' : '⚠' }}</div>
+        <div class="alert-content">
+          <p class="msg">{{ a.msg }}</p>
+          <span class="time">{{ a.time }}</span>
+        </div>
+      </div>
+      <div *ngIf="!realAlerts.length" class="empty-list">No hay alertas. Todo en orden.</div>
+    </div>
+    <div class="modal-actions mt">
+      <button class="btn outline" (click)="showAlertsModal = false">Cerrar</button>
+    </div>
+  </div>
+</div>

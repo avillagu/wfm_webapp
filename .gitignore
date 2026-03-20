@@ -1,0 +1,32 @@
+# Node.js
+**/node_modules/
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+**/.npm-cache/
+
+# Angular
+**/.angular/
+**/dist/
+**/tmp/
+
+# Environment
+**/.env
+**/.env.local
+**/.env.*.local
+
+# Docker
+docker-compose.override.yml
+docker-compose.local.yml
+
+# IDE/Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Project Specific
+**/coverage/
+git-bash.exe
+**/npm-cache/

@@ -1,0 +1,171 @@
+<div class="controls">
+  <div>
+    <p class="eyebrow">Programación de Operación</p>
+    <h2>Calendario Flexible</h2>
+    <p class="sub">Arrastra turnos entre celdas. Haz clic en "+" para asignar con hora libre o novedad.</p>
+  </div>
+  <div class="actions">
+    <label>
+      <span>Grupo</span>
+      <select [ngModel]="group()" (ngModelChange)="onGroupChange($event)">
+        <option *ngFor="let g of groups()" [value]="g.id">{{ g.name }}</option>
+      </select>
+    </label>
+    <label>
+      <span>Semana</span>
+      <input type="date" [ngModel]="rangeStart() | date: 'yyyy-MM-dd'" (ngModelChange)="onDateChange($event)" />
+    </label>
+    <div class="week-nav">
+      <button class="icon-btn" (click)="nextWeek(-1)">◀</button>
+      <button class="icon-btn" (click)="nextWeek(1)">▶</button>
+    </div>
+    <div class="bulk-btns">
+      <button class="btn outline danger" (click)="openDeleteModal()">🗑 Limpiar turnos</button>
+      <button class="btn solid primary" (click)="showBulkModal.set(true)">📋 Carga Masiva</button>
+    </div>
+  </div>
+</div>
+
+<div class="matrix">
+  <div class="matrix-row header">
+    <div class="cell emp-col">Personal / Día</div>
+    <div class="cell day-col" *ngFor="let day of days()">
+      <span class="day-name">{{ getSpanishDay(day.date) }}</span>
+      <span class="day-num">{{ day.date | date: 'dd/MM' }}</span>
+    </div>
+  </div>
+
+  <div class="matrix-row" *ngFor="let emp of employees()">
+    <div class="cell emp-col">
+      <p class="name">{{ emp.name }}</p>
+      <p class="hint">{{ emp.role | titlecase }}</p>
+    </div>
+
+    <div class="cell drop-area" *ngFor="let day of days()"
+         (dragover)="onDragOver($event)"
+         (dragleave)="onDragLeave($event)"
+         (drop)="onDropCell($event, emp.id, day.date)">
+
+      <div class="shift-card" *ngFor="let shift of getCellShifts(emp.id, day.date)"
+           [style.border-left-color]="shift.color"
+           [style.background]="typeConfig[shift.color === '#16a34a' ? 'descanso' : shift.color === '#ca8a04' ? 'permiso' : shift.color === '#dc2626' ? 'incapacidad' : 'turno'].color"
+           draggable="true"
+           (dragstart)="onDragStart(shift)">
+        <span class="label">{{ getShiftLabel(shift) }}</span>
+        <button class="x" (click)="deleteShift(shift, day.date)">×</button>
+      </div>
+
+      <button class="add-btn" *ngIf="getCellShifts(emp.id, day.date).length === 0"
+              (click)="openAddPopup(emp, day.date)">+</button>
+
+      <!-- Inline Popup -->
+      <div class="popup" *ngIf="showAddPopup()?.empId === emp.id && showAddPopup()?.date === day.date"
+           (click)="$event.stopPropagation()">
+        <p class="popup-title">Programar Turno / Novedad</p>
+        <div class="type-selector">
+          <button [class.active]="customType === 'turno'" (click)="customType='turno'">Turno</button>
+          <button [class.active]="customType === 'descanso'" (click)="customType='descanso'">Descanso</button>
+          <button [class.active]="customType === 'permiso'" (click)="customType='permiso'">Permiso</button>
+          <button [class.active]="customType === 'incapacidad'" (click)="customType='incapacidad'">Incapacidad</button>
+        </div>
+        <div class="time-row" *ngIf="customType === 'turno'">
+          <label><span>Inicio</span><input type="time" [(ngModel)]="customStartTime" /></label>
+          <label><span>Fin</span><input type="time" [(ngModel)]="customEndTime" /></label>
+        </div>
+        <div class="popup-actions">
+          <button class="btn solid primary sm" (click)="confirmAddShift()">Guardar</button>
+          <button class="btn outline sm" (click)="showAddPopup.set(null)">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="!employees().length">
+    <p>No hay empleados en este grupo para programar.</p>
+  </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal-overlay" *ngIf="showDeleteModal()">
+  <div class="modal">
+    <h3>Eliminar Turnos</h3>
+    <p class="modal-sub">Selecciona el rango de fechas y los empleados cuyos turnos deseas eliminar.</p>
+    <div class="modal-grid">
+      <section>
+        <p class="section-label">1. Rango de Fechas</p>
+        <div class="date-row">
+          <label><span>Desde</span><input type="date" [(ngModel)]="deleteDateFrom" /></label>
+          <label><span>Hasta</span><input type="date" [(ngModel)]="deleteDateTo" /></label>
+        </div>
+      </section>
+      <section>
+        <p class="section-label">2. Personal</p>
+        <div class="emp-picker">
+          <label *ngFor="let e of employees()" class="emp-check">
+            <input type="checkbox" [checked]="deleteEmpIds.includes(e.id)" (change)="toggleDeleteEmployee(e.id)" />
+            <span>{{ e.name }}</span>
+          </label>
+        </div>
+      </section>
+    </div>
+    <div class="modal-actions">
+      <button class="btn outline" (click)="showDeleteModal.set(false)">Cancelar</button>
+      <button class="btn solid danger" (click)="confirmDeleteBulk()">Eliminar turnos</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" *ngIf="showBulkModal()">
+  <div class="modal">
+    <h3>Programación Masiva</h3>
+    <p class="modal-sub">Configura un rango de fechas, un horario o novedad y selecciona los empleados a programar.</p>
+
+    <div class="modal-grid">
+      <section>
+        <p class="section-label">1. Tipo de Programación</p>
+        <div class="type-selector">
+          <button [class.active]="bulkType === 'turno'" (click)="bulkType='turno'">Turno</button>
+          <button [class.active]="bulkType === 'descanso'" (click)="bulkType='descanso'">Descanso</button>
+          <button [class.active]="bulkType === 'permiso'" (click)="bulkType='permiso'">Permiso</button>
+          <button [class.active]="bulkType === 'incapacidad'" (click)="bulkType='incapacidad'">Incapacidad</button>
+        </div>
+
+        <p class="section-label mt">2. Rango de Fechas</p>
+        <div class="date-row">
+          <label><span>Desde</span><input type="date" [(ngModel)]="bulkStartDate" /></label>
+          <label><span>Hasta</span><input type="date" [(ngModel)]="bulkEndDate" /></label>
+        </div>
+
+        <p class="section-label mt">3. Días de la semana</p>
+        <div class="days-picker">
+          <label *ngFor="let d of [1,2,3,4,5,6,0]; let idx=index" class="day-check" [class.selected]="selectedBulkDays.includes(d)">
+            <input type="checkbox" [checked]="selectedBulkDays.includes(d)" (change)="toggleBulkDay(d)" />
+            <span>{{ 'LMXJVSD'[idx] }}</span>
+          </label>
+        </div>
+
+        <div *ngIf="bulkType === 'turno'">
+          <p class="section-label mt">4. Horario</p>
+          <div class="date-row">
+            <label><span>Inicio</span><input type="time" [(ngModel)]="customStartTime" /></label>
+            <label><span>Fin</span><input type="time" [(ngModel)]="customEndTime" /></label>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <p class="section-label">{{ bulkType === 'turno' ? '5' : '4' }}. Personal</p>
+        <div class="emp-picker">
+          <label *ngFor="let e of employees()" class="emp-check">
+            <input type="checkbox" [checked]="selectedBulkEmployees.includes(e.id)" (change)="toggleBulkEmployee(e.id)" />
+            <span>{{ e.name }}</span>
+          </label>
+        </div>
+      </section>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn outline" (click)="showBulkModal.set(false)">Cancelar</button>
+      <button class="btn solid primary" (click)="bulkApply()">Ejecutar Carga</button>
+    </div>
+  </div>
+</div>

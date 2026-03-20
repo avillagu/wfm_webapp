@@ -1,0 +1,12 @@
+PROYECTO: WFM WebApp (Workforce Management)
+
+OBJETIVO DEL NEGOCIO:
+Proveer a la compañía de una herramienta interna corporativa centralizada para la gestión inteligente de personal (Manejo inicial: ~50 usuarios en diferentes grupos). Busca automatizar la asignación de horarios, cálculos de horas laboradas, asistencias, descansos compensatorios, domingos y festivos sin depender de hojas de cálculo manuales, optimizando la operación y previendo el incumplimiento del reglamento interno.
+
+RESTRICCIONES:
+1. Tecnológicas: Frontend en Angular, Backend en NodeJS, DB en PostgreSQL (Stack gratuito/opensource).
+2. Accesibilidad y Entornos: Debe incluir scripts y configuración fácil para probar de manera local el sistema completo sin fricción (MVP) antes de desplegarse como proyecto empresarial de servidor.
+3. Diseño de UI: Tema visual obligatorio en blanco y azul, priorizando limpieza, fluidez y estética amigable.
+
+COMPLEJIDAD ESTIMADA:
+MEDIO-ALTO. Involucra un calendario interactivo complejo con manipulación masiva/individual drag-and-drop, además de un motor dinámico backend de permisos (RBAC dinámico) y reglas lógicas de análisis de tiempo y descansos.

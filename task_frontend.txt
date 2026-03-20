@@ -1,0 +1,32 @@
+TAREA
+
+NOMBRE: Desarrollo UI Angular WFM - Drag & Drop
+
+DESCRIPCIÓN:
+Construcción de Interfaz Gráfica Empresarial (Azul y Blanca Premium) conteniendo Dashboard de Métricas, Control Time-Clock (Punches de Entrada/salida) y un potente Calendario con Arrastre interactivo que reaccione dinámicamente tanto a inputs de ratón como a broadcast server (Socket.io).
+
+AGENTE RESPONSABLE:
+Frontend Engineer
+
+INPUTS:
+01_requirements.txt, Archivos endpoints JSON previstos.
+
+OUTPUTS ESPERADOS:
+Todo el arbol de la SPA interactiva montada en Angular lista para testing.
+
+PASOS A REALIZAR:
+1. Setup inicial de Workspace y Theme Corporativo (CSS Globales Azules, Blancos / Layout).
+2. Sistema de autenticación JWT Forms e inyección HTTP Headers en Interceptor.
+3. Armado Componente Calendario Masivo capaz de enviar eventos drop y consumirlos.
+4. Componente Dashboard ABM + Permisos limitados según Rol Activo (El componente es ciego al data de otros grupos segun backend).
+5. Vistas UI de la cadena de Modulo de Cambios (3 Steps).
+
+CRITERIOS DE ACEPTACIÓN:
+- 100% responsivo para resoluciones Laptop en la vista Calendario.
+- Consumo real de los eventos WebSockets del modulo "WFM".
+
+DEPENDENCIAS:
+- Servidor Backend funcional y poblado parcialmente en DB.
+
+ESTADO:
+[Pendiente]

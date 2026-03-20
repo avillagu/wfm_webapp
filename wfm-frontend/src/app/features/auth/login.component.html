@@ -1,0 +1,36 @@
+<div class="login">
+  <div class="card">
+    <p class="eyebrow">WFM MAPO</p>
+    <h2>Acceso seguro</h2>
+    <p class="hint">Autenticación JWT con roles dinámicos.</p>
+
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <label>
+        Usuario / correo
+        <input type="text" placeholder="admin o usuario@empresa.com" formControlName="email" />
+      </label>
+
+      <label>
+        Contraseña
+        <input type="password" placeholder="••••••" formControlName="password" />
+      </label>
+
+      <div class="row">
+        <label>
+          Rol
+          <select formControlName="role">
+            <option value="admin">Administrador</option>
+            <option value="supervisor">Supervisor</option>
+            <option value="analyst">Analista</option>
+          </select>
+        </label>
+        <label>
+          Grupo
+          <input type="text" placeholder="CX-Norte" formControlName="group" />
+        </label>
+      </div>
+
+      <button type="submit" [disabled]="form.invalid">Ingresar</button>
+    </form>
+  </div>
+</div>

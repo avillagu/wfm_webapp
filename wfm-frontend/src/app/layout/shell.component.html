@@ -1,0 +1,53 @@
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand" (click)="goTo('/dashboard')">
+      <span class="dot"></span>
+      <div>
+        <p class="small">MAPO WFM</p>
+        <p class="title">Control Center</p>
+      </div>
+    </div>
+    <nav>
+      <a
+        *ngFor="let item of navItems"
+        class="nav-item"
+        [routerLink]="item.path"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
+        <div class="pill"></div>
+        <div>
+          <p class="label">{{ item.label }}</p>
+          <p class="hint">{{ item.hint }}</p>
+        </div>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <p class="hint">Roles activos: Admin / Supervisor / Analista</p>
+      <button class="outline" (click)="auth.logout()">Cerrar sesión</button>
+    </div>
+  </aside>
+
+  <main class="content">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Operación en tiempo real</p>
+        <h1>Workforce Management</h1>
+        <p class="hint">Dashboard, Calendario y Asistencias sincronizadas por Socket.io</p>
+      </div>
+      <div class="user">
+        <div class="badge" [attr.data-role]="auth.role() || 'guest'">
+          {{ auth.role() || 'Invitado' | titlecase }}
+        </div>
+        <div>
+          <p class="label">{{ auth.user()?.name || 'Sin sesión' }}</p>
+          <p class="hint">{{ auth.user()?.group || 'Sin grupo' }}</p>
+        </div>
+      </div>
+    </header>
+
+    <section class="page">
+      <router-outlet></router-outlet>
+    </section>
+  </main>
+</div>

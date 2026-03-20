@@ -1,0 +1,43 @@
+DISEÑO DE ARQUITECTURA
+
+DESCRIPCIÓN GENERAL:
+Sistema de WFM de complejidad alta-media que requiere visualización simultánea (colaborativa) y aplicación estricta de límites de horas, domingos y sugerencias automáticas de compensatorios a través de control granular de acceso.
+
+COMPONENTES DEL SISTEMA:
+- Frontend (Angular): Encargado únicamente de la capa de visualización. Single Page Application robusta que rutea vistas separadas al Administrador, Supervisor y Analista, controlando qué módulos de filtrado se iluminan/ocultan con directivas nativas. 
+- Backend (Node.js): Entidad que encapsula el Motor de Inteligencia, recibe parámetros REST del cliente, valida tokens JWT y re-transmite eventos mediante Sockets.
+- Base de datos (PostgreSQL Nativo): Encargada de persistir el historial de asistencias (Punches/Reloj) y Turnos.
+- APIs REST.
+- WebSockets para flujos bi-direccionales de calendario.
+
+FLUJO DE DATOS:
+1. El usuario accede al cliente web Angular y autentica (recibe y guarda Token).
+2. Se pide la vista de turnos de un grupo. El Backend Node valida la jerarquía e invoca consulta SQL Nativa al motor PostgresSQL.
+3. Se retorna información y Angular pinta el Drag & Drop mediante un componente especializado.
+4. Si un usuario mueve un turno, se propaga POST. Backend inserta en PostgreSQL.
+5. El sistema evalúa el agregado de las horas o fines de semana (Inteligencia WFM). Si pasa de reglamento emite alertas, persistidas y luego emitidas vía Broadcast a los demás clientes WebSockets, actualizando a todos sincronizadamente.
+
+TECNOLOGÍAS:
+- Lenguajes: TypeScript (Front/Back) , JS, SQL Puro.
+- Frameworks: Angular (Módulos, HttpClient), Node.js (Express o Nest Native).
+- Infraestructura: Imágenes y configuración de Docker Compose apuntando al puerto standard.
+
+INTEGRACIONES:
+Ninguna API externa de CRM o ERP. Sistema 100% Autocontenido por ahora.
+
+ESCALABILIDAD:
+- Crece horizontalmente dividiendo la aplicación Node detrás de un balanceador una vez se traslade al servidor del cliente de empresa, gracias a persistencia basada en PosgreSQL común a las instancias Node.
+
+SEGURIDAD:
+Uso de JWT por cabeceras `Authorization` aislando estrictamente data de grupos. El Analista será bloqueado (403/Forbidden) si modifica o lee el Calendario de grupos ajenos, sin excepciones por el Controlador principal. Hash bcrypt de credenciales.
+
+DECISIONES CLAVE:
+- Eliminación de Prisma / ORM externo y uso de Driver PostgreSQL nativo `pg`: Para prevenir retrasos y rechazos de compliance de TI con tecnologías corporativas, simplificando la capa.
+- WebSockets introducidos para eliminar la colisión inherente de manipulación Drag N Drop en agendas compartidas por múltiples supervisores.
+- Contenedores Docker obligatorios para MVP para facilitar y automatizar que el Director haga levantamiento local inmediato del stack (evita instalar motores PostgresSQL manuales en su O.S Windows).
+
+RIESGOS TÉCNICOS:
+Validaciones de tiempos sobre franjas de fechas largas (e.g. Turnos noche que cortan en la madrugada entre Domingo y Lunes respecto al cruce al cálculo de festivos WFM).
+
+DEPENDENCIAS ENTRE COMPONENTES:
+Estricta ligadura entre el esquema SQL final (Init.sql) y el modelo de Tipos TS en Frontend y Backend.

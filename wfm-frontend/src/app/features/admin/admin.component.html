@@ -1,0 +1,135 @@
+<!-- ══════════════════════════════════
+     HEADER
+══════════════════════════════════ -->
+<div class="page-header">
+  <p class="eyebrow">Administración</p>
+  <h2>Usuarios, Perfiles y Grupos</h2>
+</div>
+
+<!-- ══════════════════════════════════
+     SECTION: GRUPOS
+══════════════════════════════════ -->
+<section class="section">
+  <div class="section-head">
+    <div>
+      <h3 class="section-title">Grupos</h3>
+      <p class="section-sub">Agrupaciones de personal por equipo o célula</p>
+    </div>
+    <button class="btn outline sm" type="button" (click)="groupForm.reset({ id: '', name: '' }); showGroupForm.set(true)">+ Nuevo grupo</button>
+  </div>
+
+  <div class="card-grid">
+    <div class="group-card" *ngFor="let g of groups()" (click)="editGroup(g)" [class.selected]="groupForm.value.id === g.id">
+      <div class="group-icon">{{ g.name.charAt(0) }}</div>
+      <div class="group-info">
+        <p class="name">{{ g.name }}</p>
+      </div>
+      <div class="actions">
+        <button class="icon-edit" type="button" (click)="$event.stopPropagation(); editGroup(g)">✏</button>
+        <button class="icon-del" type="button" (click)="$event.stopPropagation(); deleteGroup(g.id)">×</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="inline-form" *ngIf="showGroupForm()" [formGroup]="groupForm" (ngSubmit)="saveGroup()">
+    <h4>{{ groupForm.value.id ? 'Editar Grupo' : 'Crear Grupo' }}</h4>
+    <div class="form-row">
+      <label>
+        <span>Nombre del grupo</span>
+        <input formControlName="name" placeholder="Ej: CX-Norte" />
+      </label>
+      <div class="form-actions">
+        <button type="submit" class="btn solid primary" [disabled]="groupForm.invalid" (click)="saveGroup()">
+          {{ groupForm.value.id ? 'Actualizar' : 'Guardar' }}
+        </button>
+        <button type="button" class="btn outline" (click)="groupForm.reset({ id: '', name: '' }); showGroupForm.set(false)">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     SECTION: EMPLEADOS
+══════════════════════════════════ -->
+<section class="section">
+  <div class="section-head">
+    <div>
+      <h3 class="section-title">Empleados</h3>
+      <p class="section-sub">Gestión de personas por grupo y rol</p>
+    </div>
+    <div class="head-actions">
+      <select [ngModel]="selectedGroupId()" (ngModelChange)="onGroupFilterChange($event)">
+        <option *ngFor="let g of groups()" [value]="g.id">{{ g.name }}</option>
+      </select>
+      <button class="btn outline sm" type="button" (click)="employeeForm.reset({ id: '', name: '', username: '', role: 'analyst', groupId: selectedGroupId(), active: true }); showEmpForm.set(true)">+ Nuevo empleado</button>
+    </div>
+  </div>
+
+  <div class="emp-table">
+    <div class="emp-header">
+      <span>Nombre</span>
+      <span>Usuario</span>
+      <span>Rol</span>
+      <span>Grupo</span>
+      <span>Estado</span>
+      <span></span>
+    </div>
+    <div class="emp-row" *ngFor="let e of employees()" (click)="editEmployee(e)" [class.selected]="employeeForm.value.id === e.id">
+      <span class="emp-name"><strong>{{ e.name }}</strong></span>
+      <span class="emp-username">{{ e.username || '—' }}</span>
+      <span><span class="role-badge role-{{ e.role }}">{{ e.role | titlecase }}</span></span>
+      <span>{{ e.groupName || e.groupId }}</span>
+      <span><span class="status" [class.active]="e.active">{{ e.active ? 'Activo' : 'Inactivo' }}</span></span>
+      <span class="row-actions">
+        <button class="icon-edit" (click)="$event.stopPropagation(); editEmployee(e)">✏</button>
+        <button class="icon-del" (click)="$event.stopPropagation(); deleteEmployee(e.id)">×</button>
+      </span>
+    </div>
+    <div class="emp-empty" *ngIf="!employees().length">
+      <p>No hay empleados en este grupo. Crea uno nuevo.</p>
+    </div>
+  </div>
+
+  <!-- Inline Employee Form -->
+  <div class="inline-form" *ngIf="showEmpForm()" [formGroup]="employeeForm" (ngSubmit)="saveEmployee()">
+    <h4>{{ employeeForm.value.id ? 'Editar Empleado' : 'Crear Empleado' }}</h4>
+    <div class="form-grid">
+      <label>
+        <span>Nombre completo</span>
+        <input formControlName="name" placeholder="Ej: Ana Velasco" />
+      </label>
+      <label>
+        <span>Usuario (Login)</span>
+        <input formControlName="username" placeholder="Ej: ana.velasco" />
+      </label>
+      <label>
+        <span>Rol</span>
+        <select formControlName="role">
+          <option value="admin">Administrador</option>
+          <option value="supervisor">Supervisor</option>
+          <option value="analyst">Analista</option>
+        </select>
+      </label>
+      <label>
+        <span>Grupo</span>
+        <select formControlName="groupId">
+          <option *ngFor="let g of groups()" [value]="g.id">{{ g.name }}</option>
+        </select>
+      </label>
+      <label class="toggle-label">
+        <span>Estado</span>
+        <div class="toggle-wrap">
+          <input type="checkbox" formControlName="active" id="emp-active" />
+          <label for="emp-active" class="toggle"></label>
+          <span class="toggle-text">{{ employeeForm.value.active ? 'Activo' : 'Inactivo' }}</span>
+        </div>
+      </label>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn solid primary" [disabled]="employeeForm.invalid" (click)="saveEmployee()">
+        {{ employeeForm.value.id ? 'Actualizar empleado' : 'Guardar empleado' }}
+      </button>
+      <button type="button" class="btn outline" (click)="employeeForm.reset({ id: '', name: '', username: '', role: 'analyst', groupId: selectedGroupId(), active: true }); showEmpForm.set(false)">Cancelar</button>
+    </div>
+  </div>
+</section>

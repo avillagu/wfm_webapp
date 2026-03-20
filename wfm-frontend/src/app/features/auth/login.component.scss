@@ -1,0 +1,80 @@
+.login {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(120deg, #0b2f55, #0f4d8a);
+}
+
+.card {
+  width: min(440px, 90vw);
+  background: #f8fbff;
+  border-radius: 18px;
+  padding: 28px 30px;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.card h2 {
+  margin: 6px 0 8px;
+  color: #0b2f55;
+}
+
+.card .hint {
+  margin: 0 0 12px;
+  color: #4b6079;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #5bc0ff;
+  margin: 0;
+  font-weight: 700;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 12px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 600;
+  color: #102b46;
+}
+
+input,
+select {
+  border: 1px solid #d6e4f5;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #fff;
+  font-size: 14px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+button {
+  margin-top: 8px;
+  background: linear-gradient(135deg, #0b84ff, #0f4d8a);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 12px 26px rgba(11, 132, 255, 0.35);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

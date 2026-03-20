@@ -1,0 +1,79 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.item {
+  background: #fff;
+  border-radius: 14px;
+  padding: 14px;
+  border: 1px solid #e3edf7;
+  box-shadow: var(--card-shadow);
+}
+
+.meta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.meta .id {
+  margin: 0;
+  font-weight: 700;
+  color: #0f4d8a;
+}
+
+.meta .employee {
+  margin: 0;
+  color: #0b2f55;
+}
+
+.meta .badge {
+  margin-left: auto;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: #d5ecff;
+  color: #0b2f55;
+  font-weight: 700;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.step {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px dashed #d8e6f5;
+  background: #f8fbff;
+}
+
+.step[data-status='done'] {
+  border-color: #20c997;
+  background: #e9fff6;
+}
+
+.step[data-status='rejected'] {
+  border-color: #ff6b6b;
+  background: #fff0f0;
+}
+
+.step .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 99px;
+  background: #0b84ff;
+  margin-top: 6px;
+}
+
+.timestamp {
+  margin: 10px 0 0;
+  color: #51627a;
+  font-size: 12px;
+}

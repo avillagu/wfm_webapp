@@ -1,0 +1,54 @@
+CONTRATO DE PROYECTO
+
+NOMBRE DEL PROYECTO: WFM WebApp
+
+OBJETIVO GENERAL:
+Desarrollar y desplegar una aplicación web integral de Workforce Management (WFM) para administrar eficientemente la plantilla laboral. El sistema permitirá programar horarios por grupos, registrar asistencia y ofrecer insights a través de un motor inteligente de reglas de negocio y restricciones temporales.
+
+PROBLEMA A RESOLVER:
+Dificultad en el manejo escalable de turnos, cruces de descansos compensatorios y verificación manual de topes de horas/domingos permitidos por reglamento para un volumen inicial de 50 personas divididas en grupos operativos.
+
+ALCANCE:
+- Qué incluye: Creación de interfaz Angular corporativa azul/blanca. Backend Node.js con base de datos PostgreSQL. Módulos de administración de usuarios/grupos, calendario interactivo drag&drop para turnos masivos e individuales, reloj checador, motor de validación de reglas/alertas (semanas, domingos, compensatorios), gestión de permisos dinámicos para Supervisores y exportación de datos en texto. Generación de un agente o scripts DevOps para testing local ágil ("One-Click Deploy").
+- Qué NO incluye: Notificaciones por correo electrónico o SMS externa, ni despliegue directo a los servidores definitivos de la empresa en esta fase.
+
+REQUERIMIENTOS FUNCIONALES:
+1. Panel Admin. Usuarios, grupos y asignación dinámica de alcance de Supervisores.
+2. Calendario Scheduling. Arrastrar y soltar. Turnos mañana/tarde/noche. Filtros por grupo (estricto aislamiento por rol Supervisor vs Analista).
+3. Motor inteligente WFM con cruce de festivos/domingos vs horas máximas parametrizadas. Visualización de advertencias/sugerencias de descanso In-App.
+4. Flujo de solicitudes de cambios de turnos/descansos.
+5. Control Clock-In/Out.
+6. Exportación de reporte TXT.
+
+REQUERIMIENTOS NO FUNCIONALES:
+- Performance y validaciones en tiempo real en la vista calendario.
+- Configuración inmediata en local (`localhost`) para propósitos de presentación interna de la empresa (DevOps).
+- UI con colores blanco, azul, estéticamente premium.
+
+STACK TECNOLÓGICO PROPUESTO:
+- Frontend: Angular
+- Backend: NodeJS (API REST + Socket.io para Tiempo Real)
+- Base de Datos: PostgreSQL (usando driver nativo, sin ORMs externos)
+- DevOps: Scripts Docker/npm para levantamiento local facilitado.
+
+ARQUITECTURA GENERAL:
+Arquitectura Monolítica Modular Separada. Una API REST (NodeJS) encargada de las transacciones (CRUD) y el procesamiento batch inteligente en la asignación masiva de turnos y validaciones. Un cliente independiente (Angular) que consumirá los endpoints y renderizará la UI usando librerías robustas de calendario JS y Componentes.
+
+AGENTES DEFINIDOS:
+1. Frontend Engineer: (Angular, UI/UX, Componentes visuales y logica en vista).
+2. Backend Developer: (NodeJs, PostgreSQL, Controladores, JWT, Reglas WFM).
+3. DevOps Engineer: (Scripts de configuración y Docker para probar local/cloud, Mantenimiento de contenedores DB local).
+
+CRITERIOS DE ÉXITO:
+- Todos los tipos de usuarios acceden de forma segura con visibilidad delimitada solo a lo configurado por el Administrador.
+- El sistema detecta y alerta automáticamente cuando se quiebra la regla de horas límite o domingos parametrizados.
+- Despliegue en 1 paso a nivel local para poder realizar la presentación ejecutiva por el Director.
+
+RIESGOS IDENTIFICADOS:
+- Complejidad del filtrado de calendario sumado a manipulaciones concurrentes de turnos en grupos grandes.
+- Configuración de RBAC variable puede cruzar permisos indeseados si no se testea bajo todos los roles de Supervisor posibles.
+
+APROBACIÓN:
+
+APROBADO POR: Alejandro Villa
+FECHA: 19/03/2026

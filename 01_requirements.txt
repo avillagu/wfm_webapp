@@ -1,0 +1,33 @@
+REQUERIMIENTOS — WFM WebApp
+
+1. MÓDULO DE ADMINISTRACIÓN (DASHBOARD Y JERARQUÍAS)
+- Dashboard con indicador en tiempo real de empleados in-clock / out-clock.
+- Creación y gestión de ABM de Usuarios, Perfiles y Grupos.
+- Tres niveles base: Admin, Supervisor y Analista.
+- RBAC Dinámico: El Administrador puede personalizar el alcance (permisos) de cada cuenta tipo "Supervisor".
+
+2. MÓDULO DE TURNOS (SCHEDULING CALENDAR)
+- Vista tipo calendario.
+- Modalidades de vista / filtro: Visualización de los horarios asignados por grupo.
+- Visibilidad: Analistas ven exclusivamente los turnos de su propio grupo. Supervisor y Admin pueden ver los turnos de todos los grupos.
+- Asignación manual e interactiva: Crear turnos sencillos o masivos (mañana, tarde, noche). Arrastrar y soltar (drag & drop) para reacomodar horarios.
+- Actualización en Tiempo Real: Los cambios en el calendario se reflejan instantáneamente para evitar colisiones cruzadas, empleando WebSockets.
+
+3. CONTROL DE ASISTENCIA (TIME & ATTENDANCE)
+- Botón rápido y principal para iniciar (Clock-In) y terminar turno (Clock-Out), guardando hora exacta.
+
+4. MOTOR DE INTELIGENCIA DE REGLAS (WFM INTELLIGENCE)
+- Admin define la "plantilla de reglas de operación" global de cada empleado (Ej. tope de horas máximas / semana).
+- Calculador dinámico de festivos trabajados y domingos programados en el mes en base a la asignación en el calendario.
+- Alertas In-App: Notificación visual al Supervisor/Admin cuando las asignaciones programen turnos que infrinjan el tope de horas, o el máximo de domingos en un mes.
+- Sugerencias Smart: El sistema de manera proactiva lanzará sugerencias si a un Analista se le debe un día de descanso compensatorio por laborar un fin de semana/festivo.
+
+5. MÓDULO DE CAMBIOS Y NOVEDADES
+- Flujo de Intercambio (3 pasos): 1) El Analista solicita el cambio. 2) El compañero involucrado acepta/rechaza. 3) Aprobación final por Admin o Supervisor con permisos.
+- Solicitudes Directas: Para días de descanso compensatorios, la solicitud pasa directo a revisión de la jerarquía superior libre de pares.
+
+6. EXPORTACIÓN
+- Generar resumen del estatus de turnos (tipo reporte de estado) en formato de texto.
+
+7. UI / UX
+- Estética Corporativa limpia de alto nivel en tonalidades Azules y Blancas. Amigable al operador.

@@ -1,0 +1,30 @@
+TAREA
+
+NOMBRE: Container Docker Deployment en 1-Click
+
+DESCRIPCIÓN:
+Mecanismo de Despliegue de ambiente aislado mediante YAML files local que interconecte el código final Backend, Frontend y Motor DB en un comando simple evitable frustraciones de red interna al realizar presentaciones corporativas.
+
+AGENTE RESPONSABLE:
+DevOps Engineer
+
+INPUTS:
+Rutas y binarios fuente del Backend (Node) y Front (Angular). `init.sql`.
+
+OUTPUTS ESPERADOS:
+YAML Script / Dockerfile + un Bat script / Readme simple.
+
+PASOS A REALIZAR:
+1. Composición del Dockerfile Backend.
+2. Contenedor Frontend servido para dev o production mode.
+3. Integrar la imagen standard de Postgres DB montando un volumen interno que levante automáticamente de raíz el `init.sql` y permita logs limpios.
+4. Script/Bat maestro o un `docker-compose up -d --build` documentado.
+
+CRITERIOS DE ACEPTACIÓN:
+- Con base Local 100% aislada. No pide descargar software ajeno diferente a Docker.
+
+DEPENDENCIAS:
+- Exige haber finalizado el Frontend y Backend Development Tasks.
+
+ESTADO:
+[Pendiente]
