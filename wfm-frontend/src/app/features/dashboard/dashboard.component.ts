@@ -8,13 +8,6 @@ import { DashboardMetrics } from '../../core/models/models';
 import { AuthService } from '../../core/services/auth.service';
 import { Router } from '@angular/router';
 
-interface Permission {
-  label: string;
-  analyst: boolean;
-  supervisor: boolean;
-  admin: boolean;
-  locked: boolean;   // admin always has all
-}
 
 @Component({
   selector: 'app-dashboard',
@@ -28,20 +21,7 @@ export class DashboardComponent {
   showAlertsModal = false;
   realAlerts: { type: string, msg: string, time: string }[] = [];
 
-  permissions: Permission[] = [
-    { label: 'Ver propio horario',           analyst: true,  supervisor: true,  admin: true, locked: false },
-    { label: 'Ver calendarios del grupo',    analyst: false, supervisor: true,  admin: true, locked: false },
-    { label: 'Ver todos los calendarios',    analyst: false, supervisor: false, admin: true, locked: false },
-    { label: 'Editar / Arrastrar turnos',    analyst: false, supervisor: true,  admin: true, locked: false },
-    { label: 'Programación masiva',          analyst: false, supervisor: false, admin: true, locked: false },
-    { label: 'Solicitar novedad/cambio',     analyst: true,  supervisor: true,  admin: true, locked: false },
-    { label: 'Aprobar solicitudes',          analyst: false, supervisor: true,  admin: true, locked: false },
-    { label: 'Crear / Gestionar grupos',     analyst: false, supervisor: false, admin: true, locked: false },
-    { label: 'Crear / Gestionar empleados',  analyst: false, supervisor: false, admin: true, locked: false },
-    { label: 'Configurar reglas WFM',        analyst: false, supervisor: false, admin: true, locked: false },
-    { label: 'Ver métricas de asistencia',   analyst: false, supervisor: true,  admin: true, locked: false },
-    { label: 'Exportar reportes',            analyst: false, supervisor: true,  admin: true, locked: false },
-  ];
+
 
   constructor(protected api: ApiService, protected auth: AuthService, private router: Router) {}
 
@@ -94,8 +74,5 @@ export class DashboardComponent {
     this.router.navigate(['/requests']);
   }
 
-  savePermissions() {
-    // In a real implementation this would POST to the backend
-    alert('Permisos actualizados correctamente.');
-  }
+
 }

@@ -2,7 +2,7 @@
   <aside class="sidebar">
     <div class="brand" (click)="goTo('/dashboard')">
       <span class="dot"></span>
-      <div>
+      <div class="brand-text">
         <p class="small">MAPO WFM</p>
         <p class="title">Control Center</p>
       </div>
@@ -15,16 +15,21 @@
         routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: true }"
       >
-        <div class="pill"></div>
-        <div>
+        <div class="nav-icon">{{ item.label.charAt(0) }}</div>
+        <div class="nav-text">
           <p class="label">{{ item.label }}</p>
           <p class="hint">{{ item.hint }}</p>
         </div>
       </a>
     </nav>
     <div class="sidebar-footer">
-      <p class="hint">Roles activos: Admin / Supervisor / Analista</p>
-      <button class="outline" (click)="auth.logout()">Cerrar sesión</button>
+      <div class="footer-text">
+        <p class="hint">Roles activos: Admin / Supervisor / Analista</p>
+      </div>
+      <button class="outline" (click)="auth.logout()">
+        <span class="btn-icon">➜</span>
+        <span class="btn-text">Cerrar sesión</span>
+      </button>
     </div>
   </aside>
 

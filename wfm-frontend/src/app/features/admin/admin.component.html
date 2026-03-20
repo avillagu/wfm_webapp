@@ -31,7 +31,7 @@
     </div>
   </div>
 
-  <div class="inline-form" *ngIf="showGroupForm()" [formGroup]="groupForm" (ngSubmit)="saveGroup()">
+  <form class="inline-form" *ngIf="showGroupForm()" [formGroup]="groupForm" (ngSubmit)="saveGroup()">
     <h4>{{ groupForm.value.id ? 'Editar Grupo' : 'Crear Grupo' }}</h4>
     <div class="form-row">
       <label>
@@ -39,13 +39,13 @@
         <input formControlName="name" placeholder="Ej: CX-Norte" />
       </label>
       <div class="form-actions">
-        <button type="submit" class="btn solid primary" [disabled]="groupForm.invalid" (click)="saveGroup()">
+        <button type="submit" class="btn solid primary" [disabled]="groupForm.invalid">
           {{ groupForm.value.id ? 'Actualizar' : 'Guardar' }}
         </button>
         <button type="button" class="btn outline" (click)="groupForm.reset({ id: '', name: '' }); showGroupForm.set(false)">Cancelar</button>
       </div>
     </div>
-  </div>
+  </form>
 </section>
 
 <!-- ══════════════════════════════════
@@ -91,7 +91,7 @@
   </div>
 
   <!-- Inline Employee Form -->
-  <div class="inline-form" *ngIf="showEmpForm()" [formGroup]="employeeForm" (ngSubmit)="saveEmployee()">
+  <form class="inline-form" *ngIf="showEmpForm()" [formGroup]="employeeForm" (ngSubmit)="saveEmployee()">
     <h4>{{ employeeForm.value.id ? 'Editar Empleado' : 'Crear Empleado' }}</h4>
     <div class="form-grid">
       <label>
@@ -126,10 +126,45 @@
       </label>
     </div>
     <div class="form-actions">
-      <button type="submit" class="btn solid primary" [disabled]="employeeForm.invalid" (click)="saveEmployee()">
+      <button type="submit" class="btn solid primary" [disabled]="employeeForm.invalid">
         {{ employeeForm.value.id ? 'Actualizar empleado' : 'Guardar empleado' }}
       </button>
       <button type="button" class="btn outline" (click)="employeeForm.reset({ id: '', name: '', username: '', role: 'analyst', groupId: selectedGroupId(), active: true }); showEmpForm.set(false)">Cancelar</button>
     </div>
+  </form>
+</section>
+
+<!-- ══════════════════════════════════
+     SECTION: RBAC / PERMISSIONS
+══════════════════════════════════ -->
+<section class="section">
+  <div class="section-head">
+    <div>
+      <h3 class="section-title">Visibilidad y Permisos por Rol</h3>
+      <p class="section-sub">Configuración RBAC. Aplica a los módulos y acciones del sistema.</p>
+    </div>
+    <button class="btn outline sm" type="button" *ngIf="!editingPermissions()" (click)="toggleEditPermissions()">✎ Editar permisos</button>
+    <button class="btn solid primary sm" type="button" *ngIf="editingPermissions()" (click)="savePermissions()">Guardar cambios</button>
+  </div>
+
+  <div class="panel">
+    <table class="perm-table">
+      <thead>
+        <tr>
+          <th>Acción</th>
+          <th>Analista</th>
+          <th>Supervisor</th>
+          <th>Admin</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of permissions(); let i = index">
+          <td>{{ p.label }}</td>
+          <td class="center"><input type="checkbox" [(ngModel)]="permissions()[i].analyst" [disabled]="!editingPermissions() || p.locked" /></td>
+          <td class="center"><input type="checkbox" [(ngModel)]="permissions()[i].supervisor" [disabled]="!editingPermissions() || p.locked" /></td>
+          <td class="center"><input type="checkbox" [(ngModel)]="permissions()[i].admin" [disabled]="true" checked class="fixed" /></td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </section>

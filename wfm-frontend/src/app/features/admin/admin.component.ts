@@ -6,6 +6,14 @@ import { Employee, Group } from '../../core/models/models';
 import { AsyncPipe, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
+interface Permission {
+  label: string;
+  analyst: boolean;
+  supervisor: boolean;
+  admin: boolean;
+  locked: boolean;   // admin always has all
+}
+
 @Component({
   selector: 'app-admin',
   standalone: true,
@@ -20,6 +28,23 @@ export class AdminComponent implements OnInit {
 
   showGroupForm = signal(false);
   showEmpForm = signal(false);
+
+  // RBAC State
+  editingPermissions = signal(false);
+  permissions = signal<Permission[]>([
+    { label: 'Ver propio horario',           analyst: true,  supervisor: true,  admin: true, locked: false },
+    { label: 'Ver calendarios del grupo',    analyst: false, supervisor: true,  admin: true, locked: false },
+    { label: 'Ver todos los calendarios',    analyst: false, supervisor: false, admin: true, locked: false },
+    { label: 'Editar / Arrastrar turnos',    analyst: false, supervisor: true,  admin: true, locked: false },
+    { label: 'Programación masiva',          analyst: false, supervisor: false, admin: true, locked: false },
+    { label: 'Solicitar novedad/cambio',     analyst: true,  supervisor: true,  admin: true, locked: false },
+    { label: 'Aprobar solicitudes',          analyst: false, supervisor: true,  admin: true, locked: false },
+    { label: 'Crear / Gestionar grupos',     analyst: false, supervisor: false, admin: true, locked: false },
+    { label: 'Crear / Gestionar empleados',  analyst: false, supervisor: false, admin: true, locked: false },
+    { label: 'Configurar reglas WFM',        analyst: false, supervisor: false, admin: true, locked: false },
+    { label: 'Ver métricas de asistencia',   analyst: false, supervisor: true,  admin: true, locked: false },
+    { label: 'Exportar reportes',            analyst: false, supervisor: true,  admin: true, locked: false },
+  ]);
 
   groupForm = this.fb.group({
     id: [''],
@@ -108,5 +133,14 @@ export class AdminComponent implements OnInit {
     this.selectedGroupId.set(value);
     this.employeeForm.patchValue({ groupId: value });
     this.loadEmployees();
+  }
+
+  toggleEditPermissions() {
+    this.editingPermissions.set(!this.editingPermissions());
+  }
+
+  savePermissions() {
+    // In a real implementation this would POST to the backend
+    this.editingPermissions.set(false);
   }
 }

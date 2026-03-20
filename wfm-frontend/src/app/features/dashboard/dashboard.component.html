@@ -24,38 +24,7 @@
   </div>
 </div>
 
-<!-- ══════════════════════════════════
-     RBAC: ROLE PERMISSIONS EDITOR
-══════════════════════════════════ -->
-<div class="panel">
-  <div class="panel-head">
-    <div>
-      <p class="eyebrow">Configuración RBAC</p>
-      <h3>Visibilidad y Permisos por Rol</h3>
-      <p class="sub">El administrador puede modificar las acciones disponibles para cada rol. Los cambios aplican en tiempo real.</p>
-    </div>
-    <button class="btn solid primary" (click)="savePermissions()">Guardar cambios</button>
-  </div>
 
-  <table class="perm-table">
-    <thead>
-      <tr>
-        <th>Acción</th>
-        <th>Analista</th>
-        <th>Supervisor</th>
-        <th>Admin</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let p of permissions; let i = index">
-        <td>{{ p.label }}</td>
-        <td class="center"><input type="checkbox" [(ngModel)]="permissions[i].analyst" [disabled]="p.locked" /></td>
-        <td class="center"><input type="checkbox" [(ngModel)]="permissions[i].supervisor" [disabled]="p.locked" /></td>
-        <td class="center"><input type="checkbox" [(ngModel)]="permissions[i].admin" [disabled]="true" checked class="fixed" /></td>
-      </tr>
-    </tbody>
-  </table>
-</div>
 
 <!-- Modal Alertas -->
 <div class="modal-overlay" *ngIf="showAlertsModal" (click)="showAlertsModal = false">
