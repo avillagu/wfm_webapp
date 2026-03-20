@@ -3,8 +3,27 @@
 -- PostgreSQL Native DDL - Production Ready
 -- ============================================================
 
--- Enable UUID extension for secure identifiers
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- Enable UUID extension (Commented for managed DBs which usually have it but block creation)
+-- CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Clean up existing tables and views
+DROP VIEW IF EXISTS v_pending_change_requests CASCADE;
+DROP VIEW IF EXISTS v_monthly_hours CASCADE;
+DROP VIEW IF EXISTS v_weekly_hours CASCADE;
+DROP VIEW IF EXISTS v_monthly_sundays_count CASCADE;
+DROP VIEW IF EXISTS v_active_shifts CASCADE;
+
+DROP TABLE IF EXISTS audit_log CASCADE;
+DROP TABLE IF EXISTS notifications CASCADE;
+DROP TABLE IF EXISTS change_requests CASCADE;
+DROP TABLE IF EXISTS punches CASCADE;
+DROP TABLE IF EXISTS shifts CASCADE;
+DROP TABLE IF EXISTS wfm_rules CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS groups CASCADE;
+DROP TABLE IF EXISTS role_permissions CASCADE;
+DROP TABLE IF EXISTS permissions CASCADE;
+DROP TABLE IF EXISTS roles CASCADE;
 
 -- ============================================================
 -- 1. ROLES TABLE - Base role definitions
