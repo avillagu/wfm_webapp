@@ -130,12 +130,19 @@ export class ApiService {
   }
 
   moveShift(shiftId: string, payload: Partial<Shift>): Observable<any> {
+    const startTime = payload.start?.split('T')[1]?.substring(0, 5);
+    const endTime = payload.end?.split('T')[1]?.substring(0, 5);
+    let shiftType = payload.color === '#16a34a' ? 'descanso' : 'work';
+    if (startTime && endTime && endTime <= startTime && shiftType !== 'descanso') {
+      shiftType = 'NIGHT';
+    }
+    
     const backendPayload = {
       user_id: payload.empId,
       shift_date: payload.start?.split('T')[0],
-      start_time: payload.start?.split('T')[1]?.substring(0, 5),
-      end_time: payload.end?.split('T')[1]?.substring(0, 5),
-      shift_type: payload.color === '#16a34a' ? 'descanso' : 'work'
+      start_time: startTime,
+      end_time: endTime,
+      shift_type: shiftType
     };
     return this.http.put(`${this.base}/shifts/${shiftId}`, backendPayload, { headers: this.headers });
   }
@@ -145,14 +152,22 @@ export class ApiService {
   }
 
   bulkCreateShifts(shifts: Shift[]): Observable<any> {
-    const backendShifts = shifts.map(s => ({
-      userId: s.empId,
-      groupId: s.group,
-      shiftDate: s.start.split('T')[0],
-      startTime: s.start.split('T')[1].substring(0, 5),
-      endTime: s.end.split('T')[1].substring(0, 5),
-      shiftType: s.color === '#16a34a' ? 'descanso' : 'work'
-    }));
+    const backendShifts = shifts.map(s => {
+      const startTime = s.start.split('T')[1].substring(0, 5);
+      const endTime = s.end.split('T')[1].substring(0, 5);
+      let shiftType = s.color === '#16a34a' ? 'descanso' : 'work';
+      if (endTime <= startTime && shiftType !== 'descanso') {
+        shiftType = 'NIGHT';
+      }
+      return {
+        userId: s.empId,
+        groupId: s.group,
+        shiftDate: s.start.split('T')[0],
+        startTime,
+        endTime,
+        shiftType
+      };
+    });
     return this.http.post(`${this.base}/shifts/bulk`, { shifts: backendShifts }, { headers: this.headers });
   }
 

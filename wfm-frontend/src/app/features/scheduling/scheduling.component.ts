@@ -5,6 +5,7 @@ import { ScheduleService } from '../../core/services/schedule.service';
 import { Employee, Group, Shift, ShiftDay } from '../../core/models/models';
 import { AuthService } from '../../core/services/auth.service';
 import { ApiService } from '../../core/services/api.service';
+import { forkJoin, of } from 'rxjs';
 
 @Component({
   selector: 'app-scheduling',
@@ -250,6 +251,7 @@ export class SchedulingComponent implements OnInit {
     const isNovedad = this.bulkType !== 'turno';
     const dates = this.buildDateRange(this.bulkStartDate, this.bulkEndDate);
     const newShifts: Shift[] = [];
+    const deleteOps: Array<import('rxjs').Observable<any>> = [];
 
     this.selectedBulkEmployees.forEach(empId => {
       const emp = this.employees().find(e => e.id === empId);
@@ -260,10 +262,10 @@ export class SchedulingComponent implements OnInit {
 
         const day = this.days().find(d => d.date === date);
         if (day) {
-          // If shift exists, delete the old one first to prevent duplication
+          // If shift exists, queue it for deletion first to prevent duplication
           const existing = day.shifts.find(s => s.empId === empId);
           if (existing) {
-            this.api.deleteShift(existing.id).subscribe();
+            deleteOps.push(this.api.deleteShift(existing.id));
             day.shifts = day.shifts.filter(s => s.id !== existing.id);
           }
         }
@@ -282,7 +284,24 @@ export class SchedulingComponent implements OnInit {
 
     if (newShifts.length > 0) {
       this.days.set([...this.days()]);
-      this.api.bulkCreateShifts(newShifts).subscribe(() => this.showBulkModal.set(false));
+      
+      const proceedWithCreate = () => {
+        this.api.bulkCreateShifts(newShifts).subscribe({
+          next: () => this.showBulkModal.set(false),
+          error: (err) => console.error("Error salvando turnos masivos:", err)
+        });
+      };
+
+      if (deleteOps.length > 0) {
+        forkJoin(deleteOps).subscribe({
+          next: () => proceedWithCreate(),
+          error: (err) => {
+            console.error("Error en eliminaciones previas, abortando creación masiva:", err);
+          }
+        });
+      } else {
+        proceedWithCreate();
+      }
     }
   }
 
