@@ -28,17 +28,38 @@ const server = http.createServer(app);
 
 // Configuration
 const PORT = process.env.PORT || 3000;
-const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:4200';
+let CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:4200';
+
+// Handle common mistakes like missing https
+const allowedOrigins = [CORS_ORIGIN];
+if (CORS_ORIGIN.startsWith('http')) {
+  // If provided with http, also allow version without it
+  allowedOrigins.push(CORS_ORIGIN.replace(/^https?:\/\//, ''));
+} else {
+  // If provided without http, also allow with https and http
+  allowedOrigins.push(`https://${CORS_ORIGIN}`);
+  allowedOrigins.push(`http://${CORS_ORIGIN}`);
+}
 
 // Security middleware
 app.use(helmet({
-  contentSecurityPolicy: false, // Disable for API
+  contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false
 }));
 
-// CORS configuration
+// CORS configuration (more flexible for production setup)
 app.use(cors({
-  origin: CORS_ORIGIN,
+  origin: (origin, callback) => {
+    // If no origin (like mobile apps or curl requests), allow it
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin) || allowedOrigins.some(o => origin.endsWith(o))) {
+      callback(null, true);
+    } else {
+      console.warn('CORS Blocked for origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -63,6 +84,30 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime()
   });
+});
+
+// Emergency Database Setup Endpoint (Delete after use!)
+app.get('/api/setup-database', async (req, res) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const initSqlPath = path.join(__dirname, '..', 'database', 'init.sql');
+    const initSql = fs.readFileSync(initSqlPath, 'utf8');
+    
+    await pool.query(initSql);
+    
+    res.json({ 
+      success: true, 
+      message: 'Base de datos inicializada correctamente.',
+      credentials: 'admin / admin123'
+    });
+  } catch (err) {
+    res.status(500).json({ 
+      success: false, 
+      error: err.message,
+      stack: err.stack 
+    });
+  }
 });
 
 // API Routes
