@@ -2,10 +2,10 @@
   <div>
     <p class="eyebrow">Programación de Operación</p>
     <h2>Calendario Flexible</h2>
-    <p class="sub">Arrastra turnos entre celdas. Haz clic en "+" para asignar con hora libre o novedad.</p>
+    <p class="sub" *ngIf="auth.role() !== 'analyst'">Arrastra turnos entre celdas. Haz clic en "+" para asignar con hora libre o novedad.</p>
   </div>
   <div class="actions">
-    <label>
+    <label *ngIf="auth.role() !== 'analyst'">
       <span>Grupo</span>
       <select [ngModel]="group()" (ngModelChange)="onGroupChange($event)">
         <option *ngFor="let g of groups()" [value]="g.id">{{ g.name }}</option>
@@ -19,7 +19,7 @@
       <button class="icon-btn" (click)="nextWeek(-1)">◀</button>
       <button class="icon-btn" (click)="nextWeek(1)">▶</button>
     </div>
-    <div class="bulk-btns">
+    <div class="bulk-btns" *ngIf="auth.role() !== 'analyst'">
       <button class="btn outline danger" (click)="openDeleteModal()">🗑 Limpiar turnos</button>
       <button class="btn solid primary" (click)="showBulkModal.set(true)">📋 Carga Masiva</button>
     </div>
@@ -42,20 +42,20 @@
     </div>
 
     <div class="cell drop-area" *ngFor="let day of days()"
-         (dragover)="onDragOver($event)"
-         (dragleave)="onDragLeave($event)"
-         (drop)="onDropCell($event, emp.id, day.date)">
+         (dragover)="auth.role() !== 'analyst' ? onDragOver($event) : null"
+         (dragleave)="auth.role() !== 'analyst' ? onDragLeave($event) : null"
+         (drop)="auth.role() !== 'analyst' ? onDropCell($event, emp.id, day.date) : null">
 
       <div class="shift-card" *ngFor="let shift of getCellShifts(emp.id, day.date)"
            [style.border-left-color]="shift.color"
            [style.background]="typeConfig[shift.color === '#16a34a' ? 'descanso' : shift.color === '#ca8a04' ? 'permiso' : shift.color === '#dc2626' ? 'incapacidad' : 'turno'].color"
-           draggable="true"
-           (dragstart)="onDragStart(shift)">
+           [draggable]="auth.role() !== 'analyst'"
+           (dragstart)="auth.role() !== 'analyst' ? onDragStart(shift) : null">
         <span class="label">{{ getShiftLabel(shift) }}</span>
-        <button class="x" (click)="deleteShift(shift, day.date)">×</button>
+        <button class="x" *ngIf="auth.role() !== 'analyst'" (click)="deleteShift(shift, day.date)">×</button>
       </div>
 
-      <button class="add-btn" *ngIf="getCellShifts(emp.id, day.date).length === 0"
+      <button class="add-btn" *ngIf="auth.role() !== 'analyst' && getCellShifts(emp.id, day.date).length === 0"
               (click)="openAddPopup(emp, day.date)">+</button>
 
       <!-- Inline Popup -->

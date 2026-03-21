@@ -60,7 +60,20 @@ export class SchedulingComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadGroups();
+    if (this.auth.role() !== 'analyst') {
+      this.loadGroups();
+    } else {
+      // For analysts, just load themselves into the employees list
+      const u = this.auth.user();
+      if (u) {
+        this.employees.set([{
+          id: u.id,
+          name: u.name,
+          role: u.role,
+          groupId: u.group || ''
+        } as unknown as Employee]);
+      }
+    }
     this.load();
     this.scheduling.listenUpdates().subscribe(event => { if (event) this.load(); });
   }
@@ -75,6 +88,7 @@ export class SchedulingComponent implements OnInit {
   }
 
   loadEmployees() {
+    if (this.auth.role() === 'analyst') return; // Analyst already loaded themselves
     this.api.listEmployees(this.group()).subscribe(list => {
       this.employees.set(list);
       this.selectedBulkEmployees = list.map(e => e.id);
@@ -83,7 +97,9 @@ export class SchedulingComponent implements OnInit {
   }
 
   load() {
-    if (!this.group() && this.groups().length) this.group.set(this.groups()[0].id);
+    if (this.auth.role() !== 'analyst' && !this.group() && this.groups().length) {
+      this.group.set(this.groups()[0].id);
+    }
     const start = this.toIso(this.rangeStart());
     const endDate = new Date(this.rangeStart());
     endDate.setDate(endDate.getDate() + 6);
