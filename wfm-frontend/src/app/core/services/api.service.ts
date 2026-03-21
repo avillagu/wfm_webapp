@@ -139,8 +139,13 @@ export class ApiService {
   moveShift(shiftId: string, payload: Partial<Shift>): Observable<any> {
     const startTime = payload.start?.split('T')[1]?.substring(0, 5);
     const endTime = payload.end?.split('T')[1]?.substring(0, 5);
-    let shiftType = payload.color === '#16a34a' ? 'descanso' : 'work';
-    if (startTime && endTime && endTime <= startTime && shiftType !== 'descanso') {
+    
+    let shiftType = 'work';
+    if (payload.color === '#16a34a') shiftType = 'descanso';
+    else if (payload.color === '#ca8a04') shiftType = 'permiso';
+    else if (payload.color === '#dc2626') shiftType = 'incapacidad';
+    
+    if (startTime && endTime && endTime <= startTime && shiftType === 'work') {
       shiftType = 'NIGHT';
     }
     

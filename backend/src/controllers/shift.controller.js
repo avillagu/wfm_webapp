@@ -239,30 +239,6 @@ const updateShift = asyncHandler(async (req, res) => {
       req.params.id
     );
 
-    if (overlaps.length > 0) {
-      return res.status(409).json({
-        error: 'Shift overlaps with existing shift',
-        code: 'SHIFT_OVERLAP',
-        overlaps
-      });
-    }
-
-    // WFM validation
-    const validation = await wfmRulesDAO.validateShift(
-      userId || existingShift.user_id,
-      groupId || existingShift.group_id,
-      shiftDate || existingShift.shift_date,
-      startTime || existingShift.start_time,
-      endTime || existingShift.end_time
-    );
-
-    if (!validation.valid) {
-      return res.status(400).json({
-        error: 'WFM rule violations detected',
-        code: 'WFM_VIOLATION',
-        violations: validation.violations
-      });
-    }
   }
 
   const shift = await shiftDAO.update(req.params.id, {
