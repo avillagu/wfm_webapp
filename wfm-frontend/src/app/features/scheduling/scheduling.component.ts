@@ -77,7 +77,10 @@ export class SchedulingComponent implements OnInit {
   loadGroups() {
     this.api.listGroups().subscribe(groups => {
       this.groups.set(groups);
-      if (groups.length && !this.group()) this.group.set(groups[0].id);
+      if (groups.length && !this.group()) {
+        this.group.set(groups[0].id);
+        this.load(); // Load schedule for the default group
+      }
       this.loadEmployees();
     });
   }
@@ -92,13 +95,13 @@ export class SchedulingComponent implements OnInit {
   }
 
   load() {
-    if (this.auth.role() !== 'analyst' && !this.group() && this.groups().length) {
-      this.group.set(this.groups()[0].id);
-    }
     const start = this.toIso(this.rangeStart());
     const endDate = new Date(this.rangeStart());
     endDate.setDate(endDate.getDate() + 6);
     const to = this.toIso(endDate);
+
+    // Calculate the 7 days even if group is not set yet, to show the header
+    const dayDates = this.buildDateRange(start, to);
     
     if (this.group()) {
       this.scheduling.load({ from: start, to, group: this.group() }).subscribe(days => {
@@ -109,6 +112,9 @@ export class SchedulingComponent implements OnInit {
         this.deleteDateTo = to;
       });
       this.loadEmployees();
+    } else {
+      // Still set empty days with correct dates to show headers
+      this.days.set(dayDates.map(date => ({ date, shifts: [] })));
     }
   }
 
