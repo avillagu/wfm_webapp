@@ -196,22 +196,34 @@ export class ApiService {
   }
 
   private mapShiftsToDays(shifts: any[], startDate: string): ShiftDay[] {
-    const start = new Date(startDate);
+    const parts = startDate.split('-').map(Number);
+    // Create date in local time to avoid UTC shifts
+    const start = new Date(parts[0], parts[1] - 1, parts[2]);
     const days: ShiftDay[] = [];
+    
     for (let i = 0; i < 7; i++) {
       const d = new Date(start);
       d.setDate(start.getDate() + i);
-      const iso = d.toISOString().substring(0, 10);
+      
+      // Manual ISO construction to avoid UTC offsets from toISOString()
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const dayStr = String(d.getDate()).padStart(2, '0');
+      const dayIso = `${y}-${m}-${dayStr}`;
+
       days.push({
-        date: iso,
-        shifts: (shifts || []).filter(s => s.shift_date?.substring(0, 10) === iso).map(s => ({
+        date: dayIso,
+        shifts: (shifts || []).filter(s => {
+          const sDate = String(s.shift_date).substring(0, 10);
+          return sDate === dayIso;
+        }).map(s => ({
           id: s.id,
           empId: s.user_id,
           agent: s.first_name + ' ' + s.last_name,
           role: s.role_name,
           group: String(s.group_id),
-          start: `${s.shift_date.substring(0, 10)}T${s.start_time}`,
-          end: `${s.shift_date.substring(0, 10)}T${s.end_time}`,
+          start: `${String(s.shift_date).substring(0, 10)}T${s.start_time}`,
+          end: `${String(s.shift_date).substring(0, 10)}T${s.end_time}`,
           status: 'planned',
           color: s.shift_type === 'descanso' ? '#16a34a' :
                  s.shift_type === 'permiso' ? '#ca8a04' :
