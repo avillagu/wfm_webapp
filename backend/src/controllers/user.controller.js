@@ -168,9 +168,11 @@ const updateActivity = asyncHandler(async (req, res) => {
 
   // Opt: Emit socket event so admins see the new state in real-time
   try {
-    const { emitToGroup } = require('../services/socket.service');
-    if (req.io && req.user.groupId) {
-      emitToGroup(req.io, req.user.groupId, 'user:activity', {
+    if (req.io) {
+      const rooms = ['role:ADMIN', 'role:SUPERVISOR'];
+      if (req.user.groupId) rooms.push(`group:${req.user.groupId}`);
+      
+      req.io.to(rooms).emit('user:activity', {
         userId: req.user.id,
         activity
       });

@@ -48,7 +48,8 @@ const clockIn = asyncHandler(async (req, res) => {
   // Emit socket event (optional)
   try {
     if (req.io) {
-      emitToGroup(req.io, req.user.groupId, 'punch:updated', {
+      const rooms = [`group:${req.user.groupId}`, 'role:ADMIN', 'role:SUPERVISOR'];
+      req.io.to(rooms).emit('punch:updated', {
         userId: req.user.id,
         username: req.user.username,
         action: 'clock_in',
