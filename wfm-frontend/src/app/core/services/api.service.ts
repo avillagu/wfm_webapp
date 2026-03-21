@@ -195,6 +195,12 @@ export class ApiService {
     return this.http.get<ChangeRequest[]>(`${this.base}/change-requests`, { headers: this.headers });
   }
 
+  getPunches(startDate: string, endDate: string, groupId?: string): Observable<any[]> {
+    const params: any = { startDate, endDate };
+    if (groupId) params.groupId = groupId;
+    return this.http.get<any[]>(`${this.base}/punches`, { params, headers: this.headers });
+  }
+
   private mapShiftsToDays(shifts: any[], startDate: string): ShiftDay[] {
     const parts = startDate.split('-').map(Number);
     // Create date in local time to avoid UTC shifts
