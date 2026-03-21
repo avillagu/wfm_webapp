@@ -1,6 +1,6 @@
 import { CommonModule, DatePipe, NgClass, NgFor, NgIf } from '@angular/common';
 import { Component, OnInit, signal } from '@angular/core';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { RealtimeService } from '../../core/services/realtime.service';
@@ -63,15 +63,14 @@ export class AttendanceComponent implements OnInit {
 
   loadEmployeesStatus() {
     if (this.auth.role() === 'admin' || this.auth.role() === 'supervisor') {
-      const parts = new Date().toLocaleDateString('en-CA').split('-'); // YYYY-MM-DD local
-      const today = `${parts[0]}-${parts[1]}-${parts[2]}`;
       const now = new Date();
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-      // Parallel data fetching
+      // Parallel data fetching with individual error handling
       forkJoin({
-        emps: this.api.listEmployees(),
-        shifts: this.api.getSchedule({ from: today, to: today }),
-        punches: this.api.getPunches(today, today)
+        emps: this.api.listEmployees().pipe(catchError(() => of([]))),
+        shifts: this.api.getSchedule({ from: today, to: today }).pipe(catchError(() => of([]))),
+        punches: this.api.getPunches(today, today).pipe(catchError(() => of([])))
       }).subscribe({
         next: (data: any) => {
           const todayShifts = data.shifts.length > 0 ? data.shifts[0].shifts : [];

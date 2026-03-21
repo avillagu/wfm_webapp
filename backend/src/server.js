@@ -22,6 +22,7 @@ const ruleRoutes = require('./routes/rule.routes');
 const reportRoutes = require('./routes/report.routes');
 const { setupSocketIO } = require('./services/socket.service');
 const { errorHandler } = require('./middleware/errorHandler');
+const { setupDocs } = require('./config/swagger');
 
 const app = express();
 const server = http.createServer(app);
@@ -33,10 +34,8 @@ let CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:4200';
 // Handle common mistakes like missing https
 const allowedOrigins = [CORS_ORIGIN];
 if (CORS_ORIGIN.startsWith('http')) {
-  // If provided with http, also allow version without it
   allowedOrigins.push(CORS_ORIGIN.replace(/^https?:\/\//, ''));
 } else {
-  // If provided without http, also allow with https and http
   allowedOrigins.push(`https://${CORS_ORIGIN}`);
   allowedOrigins.push(`http://${CORS_ORIGIN}`);
 }
@@ -47,12 +46,10 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }));
 
-// CORS configuration (more flexible for production setup)
+// CORS configuration
 app.use(cors({
   origin: (origin, callback) => {
-    // If no origin (like mobile apps or curl requests), allow it
     if (!origin) return callback(null, true);
-    
     if (allowedOrigins.includes(origin) || allowedOrigins.some(o => origin.endsWith(o))) {
       callback(null, true);
     } else {
@@ -86,41 +83,26 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Emergency Database Setup Endpoint (Delete after use!)
-app.get('/api/setup-database', async (req, res) => {
-  try {
-    const fs = require('fs');
-    const path = require('path');
-    const bcrypt = require('bcrypt');
-    
-    const initSqlPath = path.join(__dirname, '..', 'database', 'init.sql');
-    const initSql = fs.readFileSync(initSqlPath, 'utf8');
-    
-    // 1. Run the base SQL (creates tables, roles, and initial admin with whatever hash)
-    await pool.query(initSql);
-    
-    // 2. FORCE the admin password to 'admin123' using the live bcrypt
-    const saltRounds = 10;
-    const newHash = await bcrypt.hash('admin123', saltRounds);
-    
-    await pool.query('UPDATE users SET password_hash = $1 WHERE username = $2', [newHash, 'admin']);
-    
-    const userResult = await pool.query('SELECT COUNT(*) FROM users');
-    
-    res.json({ 
-      success: true, 
-      message: 'Base de datos inicializada y usuario ADMIN reseteado.',
-      userCount: userResult.rows[0].count,
-      credentials: 'admin / admin123'
-    });
-  } catch (err) {
-    res.status(500).json({ 
-      success: false, 
-      error: err.message,
-      stack: err.stack 
-    });
-  }
+// Socket.IO setup
+const io = new Server(server, {
+  cors: {
+    origin: process.env.SOCKET_CORS_ORIGIN || CORS_ORIGIN,
+    credentials: true
+  },
+  pingTimeout: 60000,
+  pingInterval: 25000
 });
+
+setupSocketIO(io);
+
+// Middleware to attach io to req (THIS WAS MISSING!)
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
+
+// Setup Swagger
+setupDocs(app);
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -140,25 +122,11 @@ app.use((req, res) => {
 // Global error handler
 app.use(errorHandler);
 
-// Socket.IO setup with authentication
-const io = new Server(server, {
-  cors: {
-    origin: process.env.SOCKET_CORS_ORIGIN || CORS_ORIGIN,
-    credentials: true
-  },
-  pingTimeout: 60000,
-  pingInterval: 25000
-});
-
-setupSocketIO(io);
-
 // Graceful shutdown
 const gracefulShutdown = async (signal) => {
   console.log(`\n${signal} received. Shutting down gracefully...`);
-  
   server.close(async () => {
     console.log('HTTP server closed');
-    
     try {
       await pool.end();
       console.log('Database pool closed');
@@ -168,8 +136,6 @@ const gracefulShutdown = async (signal) => {
       process.exit(1);
     }
   });
-
-  // Force close after 10 seconds
   setTimeout(() => {
     console.error('Forced shutdown due to timeout');
     process.exit(1);
