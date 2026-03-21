@@ -63,15 +63,10 @@ export class SchedulingComponent implements OnInit {
     if (this.auth.role() !== 'analyst') {
       this.loadGroups();
     } else {
-      // For analysts, just load themselves into the employees list
+      // For analysts, pre-set their own group ID so they load their coworkers
       const u = this.auth.user();
-      if (u) {
-        this.employees.set([{
-          id: u.id,
-          name: u.name,
-          role: u.role,
-          groupId: u.group || ''
-        } as unknown as Employee]);
+      if (u?.groupId) {
+        this.group.set(String(u.groupId));
       }
     }
     this.load();
@@ -88,7 +83,7 @@ export class SchedulingComponent implements OnInit {
   }
 
   loadEmployees() {
-    if (this.auth.role() === 'analyst') return; // Analyst already loaded themselves
+    if (!this.group()) return; 
     this.api.listEmployees(this.group()).subscribe(list => {
       this.employees.set(list);
       this.selectedBulkEmployees = list.map(e => e.id);
@@ -104,14 +99,17 @@ export class SchedulingComponent implements OnInit {
     const endDate = new Date(this.rangeStart());
     endDate.setDate(endDate.getDate() + 6);
     const to = this.toIso(endDate);
-    this.scheduling.load({ from: start, to, group: this.group() }).subscribe(days => {
-      this.days.set(days);
-      this.bulkStartDate = start;
-      this.bulkEndDate = to;
-      this.deleteDateFrom = start;
-      this.deleteDateTo = to;
-    });
-    this.loadEmployees();
+    
+    if (this.group()) {
+      this.scheduling.load({ from: start, to, group: this.group() }).subscribe(days => {
+        this.days.set(days);
+        this.bulkStartDate = start;
+        this.bulkEndDate = to;
+        this.deleteDateFrom = start;
+        this.deleteDateTo = to;
+      });
+      this.loadEmployees();
+    }
   }
 
   // ── CELL HELPERS ──────────────────────────────────────

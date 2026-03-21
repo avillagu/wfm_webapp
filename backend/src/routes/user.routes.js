@@ -34,7 +34,6 @@ router.get('/',
 
 router.get('/group/:groupId',
   checkGroupAccess('groupId'),
-  requirePermission('users', 'READ'),
   userController.getUsersByGroup
 );
 

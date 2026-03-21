@@ -46,6 +46,7 @@ export class AuthService {
             name: `${res.user.first_name} ${res.user.last_name}`,
             role: res.user.role_name.toLowerCase() as UserRole,
             group: res.user.group_name,
+            groupId: res.user.group_id,
             token: res.token
           };
           this.state.set({ user });

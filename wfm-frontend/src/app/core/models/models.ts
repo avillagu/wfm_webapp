@@ -6,6 +6,7 @@ export interface CurrentUser {
   role: UserRole;
   token: string;
   group?: string;
+  groupId?: string;
 }
 
 export interface DashboardMetrics {
