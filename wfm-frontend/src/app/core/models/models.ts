@@ -63,4 +63,5 @@ export interface Employee {
   active: boolean;
   current_activity?: string;
   activity_updated_at?: string;
+  activity_start_time?: string;
 }

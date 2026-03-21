@@ -40,7 +40,7 @@ class UserDAO {
    */
   async findById(id) {
     const text = `
-      SELECT 
+      SELECT
         u.id,
         u.username,
         u.email,
@@ -53,6 +53,7 @@ class UserDAO {
         u.last_login,
         u.current_activity,
         u.activity_updated_at,
+        u.activity_start_time,
         r.name AS role_name,
         g.name AS group_name,
         g.code AS group_code
@@ -162,9 +163,14 @@ class UserDAO {
   async updateActivity(id, activity) {
     const text = `
       UPDATE users
-      SET current_activity = $1, activity_updated_at = CURRENT_TIMESTAMP
+      SET current_activity = $1, 
+          activity_updated_at = CURRENT_TIMESTAMP,
+          activity_start_time = CASE 
+            WHEN current_activity IS DISTINCT FROM $1 THEN CURRENT_TIMESTAMP 
+            ELSE activity_start_time 
+          END
       WHERE id = $2
-      RETURNING id, username, current_activity, activity_updated_at
+      RETURNING id, username, current_activity, activity_updated_at, activity_start_time
     `;
     const result = await query(text, [activity, id]);
     return result.rows[0];
@@ -201,7 +207,7 @@ class UserDAO {
    */
   async findAll(page = 1, limit = 20, filters = {}) {
     let text = `
-      SELECT 
+      SELECT
         u.id,
         u.username,
         u.email,
@@ -212,6 +218,9 @@ class UserDAO {
         u.group_id,
         u.is_active,
         u.last_login,
+        u.current_activity,
+        u.activity_updated_at,
+        u.activity_start_time,
         r.name AS role_name,
         g.name AS group_name
       FROM users u
@@ -293,15 +302,20 @@ class UserDAO {
    */
   async findByGroupId(groupId) {
     const text = `
-      SELECT 
+      SELECT
         u.id,
         u.username,
         u.first_name,
         u.last_name,
         u.employee_code,
-        r.name AS role_name
+        r.name AS role_name,
+        u.current_activity,
+        u.activity_updated_at,
+        u.activity_start_time,
+        g.name AS group_name
       FROM users u
       JOIN roles r ON u.role_id = r.id
+      LEFT JOIN groups g ON u.group_id = g.id
       WHERE u.group_id = $1 AND u.is_active = TRUE
       ORDER BY u.last_name, u.first_name
     `;

@@ -51,33 +51,32 @@
 
     <div class="table-container mt">
       <div class="th-row">
-        <span>Colaborador</span>
-        <span>Rol</span>
-        <span>Grupo</span>
-        <span>Estado Actual</span>
-        <span>Tiempo en estado</span>
-        <span>Tiempo en descanso</span>
-        <span>Tiempo en baño</span>
-        <span>Tiempo total</span>
+        <span class="col-emp">Colaborador</span>
+        <span class="col-grp">Grupo</span>
+        <span class="col-est">Estado Actual</span>
+        <span class="col-tmp">Tiempo en estado</span>
+        <span class="col-hor">Hora inicio turno</span>
+        <span class="col-hor">Hora fin turno</span>
+        <span class="col-tot">Tiempo total</span>
       </div>
       <div class="tr-row" *ngFor="let emp of employeesStatus()">
-        <span class="strong">{{ emp.name }}</span>
-        <span><span class="badge">{{ emp.role | titlecase }}</span></span>
-        <span>{{ emp.groupName || emp.groupId }}</span>
-        <span>
+        <span class="col-emp strong">{{ emp.name }}</span>
+        <span class="col-grp">{{ emp.groupName || emp.groupId }}</span>
+        <span class="col-est">
           <span class="status-pill" [ngClass]="{
             'turno': emp.currentStatus === 'En turno',
             'descanso': emp.currentStatus === 'Descanso programado',
             'pendiente': emp.currentStatus === 'Turno pendiente',
             'finalizado': emp.currentStatus === 'Turno finalizado',
             'fuera': emp.currentStatus === 'Sin turno programado' || emp.currentStatus === 'Sin datos',
-            'bano': emp.currentStatus === 'En baño'
+            'bano': emp.currentStatus === 'En baño',
+            'descanso-act': emp.currentStatus === 'En descanso'
           }">{{ emp.currentStatus }}</span>
         </span>
-        <span class="time">{{ emp.timeInStatus }}</span>
-        <span class="time">{{ emp.breakTime }}</span>
-        <span class="time">{{ emp.bathroomTime }}</span>
-        <span class="time strong">{{ emp.totalTime }}</span>
+        <span class="col-tmp time">{{ emp.timeInState }}</span>
+        <span class="col-hor time">{{ emp.shiftStart }}</span>
+        <span class="col-hor time">{{ emp.shiftEnd }}</span>
+        <span class="col-tot time strong">{{ emp.totalTime }}</span>
       </div>
       <div class="empty" *ngIf="!employeesStatus().length">No hay datos para mostrar.</div>
     </div>

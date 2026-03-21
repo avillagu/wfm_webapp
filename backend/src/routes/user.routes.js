@@ -13,6 +13,7 @@ router.get('/internal/setup-activity', async (req, res) => {
   try {
     await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS current_activity VARCHAR(50) DEFAULT 'Fuera de turno'");
     await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS activity_updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP");
+    await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS activity_start_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP");
     res.json({ message: 'Migration successful' });
   } catch (err) {
     res.status(500).json({ error: err.message });

@@ -84,7 +84,10 @@ export class ApiService {
           role: u.role_name?.toLowerCase() || 'analyst',
           groupId: u.group_id,
           groupName: u.group_name,
-          active: u.is_active
+          active: u.is_active,
+          current_activity: u.current_activity,
+          activity_updated_at: u.activity_updated_at,
+          activity_start_time: u.activity_start_time
         }));
       })
     );
@@ -165,7 +168,7 @@ export class ApiService {
       }
       return {
         userId: s.empId,
-        groupId: s.group,
+        groupId: parseInt(s.group) || s.group,
         shiftDate: s.start.split('T')[0],
         startTime,
         endTime,

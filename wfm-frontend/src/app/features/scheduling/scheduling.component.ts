@@ -253,6 +253,16 @@ export class SchedulingComponent implements OnInit {
     const newShifts: Shift[] = [];
     const deleteOps: Array<import('rxjs').Observable<any>> = [];
 
+    // Validate that all selected employees have a group
+    const employeesWithoutGroup = this.selectedBulkEmployees
+      .map(id => this.employees().find(e => e.id === id))
+      .filter(e => e && !e.groupId);
+
+    if (employeesWithoutGroup.length > 0) {
+      alert(`Error: Los siguientes empleados no tienen grupo asignado: ${employeesWithoutGroup.map(e => e?.name).join(', ')}`);
+      return;
+    }
+
     this.selectedBulkEmployees.forEach(empId => {
       const emp = this.employees().find(e => e.id === empId);
       if (!emp) return;
@@ -272,7 +282,7 @@ export class SchedulingComponent implements OnInit {
 
         const s: Shift = {
           id: `${empId}-${date}-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
-          empId: emp.id, agent: emp.name, role: emp.role, group: emp.groupId,
+          empId: emp.id, agent: emp.name, role: emp.role, group: String(emp.groupId),
           start: isNovedad ? `${date}T00:00:00` : `${date}T${this.customStartTime}:00`,
           end:   isNovedad ? `${date}T23:59:00` : `${date}T${this.customEndTime}:00`,
           status: 'planned', color: cfg.borderColor

@@ -141,6 +141,9 @@ CREATE TABLE users (
     group_id INTEGER REFERENCES groups(id),
     is_active BOOLEAN DEFAULT TRUE,
     last_login TIMESTAMP WITH TIME ZONE,
+    current_activity VARCHAR(50) DEFAULT 'Fuera de turno',
+    activity_updated_at TIMESTAMP WITH TIME ZONE,
+    activity_start_time TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
