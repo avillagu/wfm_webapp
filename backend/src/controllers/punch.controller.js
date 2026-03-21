@@ -161,15 +161,13 @@ const getPunches = asyncHandler(async (req, res) => {
       endDate
     );
   } else {
-    // Admin/Supervisor - can specify groupId
-    const groupId = req.query.groupId;
-    if (groupId) {
-      punches = await punchDAO.findByGroupIdAndDateRange(groupId, startDate, endDate);
+    // Admin/Supervisor - can specify groupId or see all accessible
+    const qGroupId = req.query.groupId;
+    if (qGroupId) {
+      punches = await punchDAO.findByGroupIdAndDateRange(qGroupId, startDate, endDate);
     } else {
-      return res.status(400).json({
-        error: 'userId or groupId required',
-        code: 'VALIDATION_ERROR'
-      });
+       // If no group specified, return for all today (for the Monitor)
+       punches = await punchDAO.findByDateRange(startDate, endDate);
     }
   }
 

@@ -162,6 +162,29 @@ class PunchDAO {
     const result = await query(text, values);
     return result.rows[0];
   }
+
+  /**
+   * Get all punches for a date range (for admins/global monitor)
+   */
+  async findByDateRange(startDate, endDate) {
+    const text = `
+      SELECT 
+        p.*,
+        u.first_name,
+        u.last_name,
+        u.employee_code,
+        s.shift_date,
+        s.shift_type
+      FROM punches p
+      JOIN users u ON p.user_id = u.id
+      LEFT JOIN shifts s ON p.shift_id = s.id
+      WHERE p.punch_in >= $1
+        AND p.punch_in < ($2 + INTERVAL '1 day')
+      ORDER BY p.punch_in DESC
+    `;
+    const result = await query(text, [startDate, endDate]);
+    return result.rows;
+  }
 }
 
 module.exports = new PunchDAO();
