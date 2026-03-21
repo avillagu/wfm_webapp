@@ -61,4 +61,6 @@ export interface Employee {
   groupId: string;
   groupName?: string;
   active: boolean;
+  current_activity?: string;
+  activity_updated_at?: string;
 }

@@ -129,6 +129,10 @@ export class ApiService {
     );
   }
 
+  updateActivity(activity: string): Observable<any> {
+    return this.http.put(`${this.base}/users/me/activity`, { activity }, { headers: this.headers });
+  }
+
   moveShift(shiftId: string, payload: Partial<Shift>): Observable<any> {
     const startTime = payload.start?.split('T')[1]?.substring(0, 5);
     const endTime = payload.end?.split('T')[1]?.substring(0, 5);

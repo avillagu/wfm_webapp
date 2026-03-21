@@ -51,6 +51,8 @@ class UserDAO {
         u.group_id,
         u.is_active,
         u.last_login,
+        u.current_activity,
+        u.activity_updated_at,
         r.name AS role_name,
         g.name AS group_name,
         g.code AS group_code
@@ -151,6 +153,20 @@ class UserDAO {
     `;
 
     const result = await query(text, values);
+    return result.rows[0];
+  }
+
+  /**
+   * Update user activity status
+   */
+  async updateActivity(id, activity) {
+    const text = `
+      UPDATE users
+      SET current_activity = $1, activity_updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+      RETURNING id, username, current_activity, activity_updated_at
+    `;
+    const result = await query(text, [activity, id]);
     return result.rows[0];
   }
 

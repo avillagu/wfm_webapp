@@ -154,11 +154,41 @@ const getUsersByGroup = asyncHandler(async (req, res) => {
   res.json(users);
 });
 
+/**
+ * Update user activity
+ * PUT /api/users/me/activity
+ */
+const updateActivity = asyncHandler(async (req, res) => {
+  const { activity } = req.body;
+  if (!activity) {
+    return res.status(400).json({ error: 'Activity state required' });
+  }
+
+  const updatedUser = await userDAO.updateActivity(req.user.id, activity);
+
+  // Opt: Emit socket event so admins see the new state in real-time
+  try {
+    const { emitToGroup } = require('../services/socket.service');
+    if (req.io && req.user.groupId) {
+      emitToGroup(req.io, req.user.groupId, 'user:activity', {
+        userId: req.user.id,
+        activity
+      });
+    }
+  } catch(e) {}
+
+  res.json({
+    message: 'Activity updated',
+    user: updatedUser
+  });
+});
+
 module.exports = {
   getAllUsers,
   getUserById,
   createUser,
   updateUser,
   deleteUser,
-  getUsersByGroup
+  getUsersByGroup,
+  updateActivity
 };

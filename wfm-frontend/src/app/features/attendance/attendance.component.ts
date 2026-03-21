@@ -19,12 +19,22 @@ export class AttendanceComponent implements OnInit {
   constructor(private api: ApiService, public auth: AuthService) {}
 
   ngOnInit() {
-    // Load active punch for the current user (analysts)
     this.api.getActivePunch().subscribe({
       next: (punch: any) => {
         if (punch && punch.punch_in && !punch.punch_out) {
-          this.status.set('En turno');
+          // Si está en turno en la bd, leemos también su perfil (o usamos un defecto)
+          // Asumimos En turno inicialmente a menos que tenga una actividad reciente guardada
+          this.status.set('En turno'); 
           this.lastAction.set(punch.punch_in);
+
+          // Get exact intra-day activity if possible
+          this.api.listEmployees().subscribe(emps => {
+            const me = emps.find(e => e.id === this.auth.user()?.id);
+            if (me && me.current_activity && me.current_activity !== 'Fuera de turno') {
+              this.status.set(me.current_activity as any);
+              if (me.activity_updated_at) this.lastAction.set(me.activity_updated_at);
+            }
+          });
         }
       },
       error: () => { /* no active punch */ }
@@ -54,9 +64,20 @@ export class AttendanceComponent implements OnInit {
                   currentStatus = 'Descanso programado';
                   timeInStatus = `${shiftStart} - ${shiftEnd}`;
                 } else if (currentTime >= shiftStart && currentTime <= shiftEnd) {
-                  currentStatus = 'En turno';
-                  // Calculate mins since shift started
-                  const startMins = parseInt(shiftStart.split(':')[0]) * 60 + parseInt(shiftStart.split(':')[1]);
+                  // Si el sistema dice "En turno", miremos si el usuario presionó "En baño"
+                  if (e.current_activity && e.current_activity !== 'Fuera de turno') {
+                    currentStatus = e.current_activity;
+                  } else {
+                    currentStatus = 'En turno';
+                  }
+
+                  // Calculate mins since shift started or activity started
+                  let startMins = parseInt(shiftStart.split(':')[0]) * 60 + parseInt(shiftStart.split(':')[1]);
+                  if (e.current_activity !== 'Fuera de turno' && e.activity_updated_at) {
+                    const actD = new Date(e.activity_updated_at);
+                    startMins = actD.getHours() * 60 + actD.getMinutes();
+                  }
+
                   const nowMins = now.getHours() * 60 + now.getMinutes();
                   const elapsed = nowMins - startMins;
                   timeInStatus = `${elapsed} min (${shiftStart} - ${shiftEnd})`;
@@ -92,16 +113,36 @@ export class AttendanceComponent implements OnInit {
   }
 
   changeStatus(newStatus: 'En turno' | 'En descanso' | 'En baño' | 'Fuera de turno') {
-    const payload = newStatus === 'Fuera de turno' ? 'out' : 'in';
-    this.api.clock(payload).subscribe({
-      next: (res: any) => {
-        this.status.set(newStatus);
-        this.lastAction.set(newStatus === 'Fuera de turno' ? null : new Date().toISOString());
-      },
-      error: () => {
-         this.status.set(newStatus);
-         this.lastAction.set(newStatus === 'Fuera de turno' ? null : new Date().toISOString());
-      }
-    });
+    // Save to the db current_activity
+    this.api.updateActivity(newStatus).subscribe();
+
+    if (newStatus === 'Fuera de turno') {
+      this.api.clock('out').subscribe({
+        next: (res: any) => {
+          this.status.set(newStatus);
+          this.lastAction.set(null);
+        },
+        error: () => {
+          this.status.set(newStatus);
+          this.lastAction.set(null);
+        }
+      });
+    } else if (newStatus === 'En turno' && this.status() === 'Fuera de turno') {
+      // Clock in if coming from completely outside
+      this.api.clock('in').subscribe({
+        next: (res: any) => {
+          this.status.set(newStatus);
+          this.lastAction.set(new Date().toISOString());
+        },
+        error: () => {
+          this.status.set(newStatus);
+          this.lastAction.set(new Date().toISOString());
+        }
+      });
+    } else {
+      // Just an intraday state change
+      this.status.set(newStatus);
+      this.lastAction.set(new Date().toISOString());
+    }
   }
 }
