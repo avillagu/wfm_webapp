@@ -48,7 +48,7 @@
       </div>
       <button class="btn outline sm">Exportar Excel</button>
     </div>
-    
+
     <div class="table-container mt">
       <div class="th-row">
         <span>Colaborador</span>
@@ -56,6 +56,9 @@
         <span>Grupo</span>
         <span>Estado Actual</span>
         <span>Tiempo en estado</span>
+        <span>Tiempo en descanso</span>
+        <span>Tiempo en baño</span>
+        <span>Tiempo total</span>
       </div>
       <div class="tr-row" *ngFor="let emp of employeesStatus()">
         <span class="strong">{{ emp.name }}</span>
@@ -67,10 +70,14 @@
             'descanso': emp.currentStatus === 'Descanso programado',
             'pendiente': emp.currentStatus === 'Turno pendiente',
             'finalizado': emp.currentStatus === 'Turno finalizado',
-            'fuera': emp.currentStatus === 'Sin turno programado' || emp.currentStatus === 'Sin datos'
+            'fuera': emp.currentStatus === 'Sin turno programado' || emp.currentStatus === 'Sin datos',
+            'bano': emp.currentStatus === 'En baño'
           }">{{ emp.currentStatus }}</span>
         </span>
         <span class="time">{{ emp.timeInStatus }}</span>
+        <span class="time">{{ emp.breakTime }}</span>
+        <span class="time">{{ emp.bathroomTime }}</span>
+        <span class="time strong">{{ emp.totalTime }}</span>
       </div>
       <div class="empty" *ngIf="!employeesStatus().length">No hay datos para mostrar.</div>
     </div>

@@ -269,7 +269,7 @@ export class SchedulingComponent implements OnInit {
             day.shifts = day.shifts.filter(s => s.id !== existing.id);
           }
         }
-        
+
         const s: Shift = {
           id: `${empId}-${date}-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
           empId: emp.id, agent: emp.name, role: emp.role, group: emp.groupId,
@@ -284,21 +284,31 @@ export class SchedulingComponent implements OnInit {
 
     if (newShifts.length > 0) {
       this.days.set([...this.days()]);
-      
+
       const proceedWithCreate = () => {
         this.api.bulkCreateShifts(newShifts).subscribe({
-          next: () => {
+          next: (res) => {
             this.showBulkModal.set(false);
+            // Show detailed result message
+            let msg = `${res.created?.length || 0} turnos creados exitosamente`;
+            if (res.skipped?.length > 0) {
+              msg += `. ${res.skipped.length} omitidos (por superposición o reglas WFM)`;
+            }
+            if (res.errors?.length > 0) {
+              msg += `. ${res.errors.length} errores (ver consola)`;
+              console.error("Errores en carga masiva:", res.errors);
+            }
+            alert(msg);
             // Reload from server to reflect what was actually saved
             this.load();
           },
           error: (err) => {
             console.error("Error salvando turnos masivos:", err);
-            // Mostrar error al usuario
-            alert(`Hubo un problema al crear los turnos: ${err.error?.error || err.message}`);
+            // Mostrar error detallado al usuario
+            const errorMsg = err.error?.message || err.error?.error || err.message || 'Error desconocido';
+            alert(`Hubo un problema al crear los turnos: ${errorMsg}`);
             // Reload from server to show actual state
             this.load();
-            // Do not close the modal automatically so they see the error
           }
         });
       };
@@ -308,6 +318,7 @@ export class SchedulingComponent implements OnInit {
           next: () => proceedWithCreate(),
           error: (err) => {
             console.error("Error en eliminaciones previas:", err);
+            alert('Error al eliminar turnos existentes. Intente nuevamente.');
             this.load();
           }
         });

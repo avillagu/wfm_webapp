@@ -149,20 +149,34 @@ const createShift = [
  * POST /api/shifts/bulk
  */
 const createBulkShifts = asyncHandler(async (req, res) => {
-  try {
-    const { shifts } = req.body;
+  const { shifts } = req.body;
 
-    if (!Array.isArray(shifts) || shifts.length === 0) {
-      return res.status(400).json({
-        error: 'Shifts array required',
-        code: 'VALIDATION_ERROR'
-      });
-    }
+  if (!Array.isArray(shifts) || shifts.length === 0) {
+    return res.status(400).json({
+      error: 'Shifts array required',
+      code: 'VALIDATION_ERROR'
+    });
+  }
 
-    const validatedShifts = [];
-    const warnings = [];
+  const results = {
+    created: [],
+    skipped: [],
+    errors: []
+  };
 
-    for (const shiftData of shifts) {
+  // Process each shift individually to avoid total failure
+  for (const shiftData of shifts) {
+    try {
+      // Validate required fields
+      if (!shiftData.userId || !shiftData.groupId || !shiftData.shiftDate || 
+          !shiftData.startTime || !shiftData.endTime) {
+        results.errors.push({
+          shift: shiftData,
+          error: 'Missing required fields (userId, groupId, shiftDate, startTime, endTime)'
+        });
+        continue;
+      }
+
       const overlaps = await shiftDAO.checkOverlap(
         shiftData.userId,
         shiftData.shiftDate,
@@ -171,9 +185,9 @@ const createBulkShifts = asyncHandler(async (req, res) => {
       );
 
       if (overlaps.length > 0) {
-        warnings.push({
+        results.skipped.push({
           shift: shiftData,
-          error: 'Overlaps with existing shift — skipped'
+          error: 'Overlaps with existing shift'
         });
         continue;
       }
@@ -187,51 +201,58 @@ const createBulkShifts = asyncHandler(async (req, res) => {
       );
 
       if (!validation.valid) {
-        warnings.push({
+        results.skipped.push({
           shift: shiftData,
-          warning: 'WFM rule warning — shift created anyway',
+          warning: 'WFM rule violation',
           violations: validation.violations
         });
+        continue;
       }
 
-      validatedShifts.push({
+      // Create shift individually
+      const createdShift = await shiftDAO.create({
         ...shiftData,
         createdBy: req.user.id
       });
+
+      results.created.push(createdShift);
+    } catch (shiftError) {
+      console.error(`Error creating shift for user ${shiftData.userId}:`, shiftError.message);
+      results.errors.push({
+        shift: shiftData,
+        error: shiftError.message || 'Unknown error'
+      });
     }
+  }
 
-    let createdShifts = [];
-    if (validatedShifts.length > 0) {
-      createdShifts = await shiftDAO.createMany(validatedShifts);
-
-      try {
-        if (req.io) {
-          const groupIds = [...new Set(validatedShifts.map(s => s.groupId))];
-          groupIds.forEach(groupId => {
-            emitToGroup(req.io, groupId, 'shift:updated', {
-              action: 'bulk_created',
-              count: createdShifts.length,
-              updatedBy: req.user.username
-            });
+  // Emit socket event if shifts were created
+  if (results.created.length > 0) {
+    try {
+      if (req.io) {
+        const groupIds = [...new Set(results.created.map(s => s.group_id))];
+        groupIds.forEach(groupId => {
+          emitToGroup(req.io, groupId, 'shift:updated', {
+            action: 'bulk_created',
+            count: results.created.length,
+            updatedBy: req.user.username
           });
-        }
-      } catch(e) { /* socket not available */ }
-    }
+        });
+      }
+    } catch(e) { /* socket not available */ }
+  }
 
-    res.status(201).json({
-      message: `${createdShifts.length} shifts created successfully`,
-      shifts: createdShifts,
-      warnings: warnings.length > 0 ? warnings : undefined,
-      skipped: warnings.length
-    });
-  } catch (error) {
-    console.error("FATAL ERROR IN BULK SHIFTS:", error);
-    res.status(500).json({
-      error: 'CRITICAL_BULK_ERROR',
-      message: error.message,
-      stack: error.stack
+  // Determine response status
+  if (results.created.length === 0 && results.errors.length > 0) {
+    return res.status(400).json({
+      message: 'No shifts were created',
+      ...results
     });
   }
+
+  res.status(201).json({
+    message: `${results.created.length} shifts created successfully`,
+    ...results
+  });
 });
 
 /**

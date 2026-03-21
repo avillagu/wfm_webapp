@@ -8,19 +8,21 @@
       </div>
     </div>
     <nav>
-      <a
-        *ngFor="let item of navItems"
-        class="nav-item"
-        [routerLink]="item.path"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }"
-      >
-        <div class="nav-icon">{{ item.label.charAt(0) }}</div>
-        <div class="nav-text">
-          <p class="label">{{ item.label }}</p>
-          <p class="hint">{{ item.hint }}</p>
-        </div>
-      </a>
+      <ng-container *ngFor="let item of navItems">
+        <a
+          *ngIf="isVisible(item)"
+          class="nav-item"
+          [routerLink]="item.path"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+        >
+          <div class="nav-icon">{{ item.label.charAt(0) }}</div>
+          <div class="nav-text">
+            <p class="label">{{ item.label }}</p>
+            <p class="hint">{{ item.hint }}</p>
+          </div>
+        </a>
+      </ng-container>
     </nav>
     <div class="sidebar-footer">
       <div class="footer-text">

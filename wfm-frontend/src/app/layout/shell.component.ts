@@ -8,6 +8,7 @@ interface NavItem {
   path: string;
   label: string;
   hint: string;
+  roles?: string[]; // Roles allowed (if not specified, all roles can access)
 }
 
 @Component({
@@ -19,8 +20,8 @@ interface NavItem {
 })
 export class ShellComponent implements OnInit {
   navItems: NavItem[] = [
-    { path: '/dashboard', label: 'Dashboard', hint: 'Control y métricas' },
-    { path: '/admin', label: 'Administración', hint: 'Usuarios y grupos' },
+    { path: '/dashboard', label: 'Dashboard', hint: 'Control y métricas', roles: ['admin', 'supervisor'] },
+    { path: '/admin', label: 'Administración', hint: 'Usuarios y grupos', roles: ['admin', 'supervisor'] },
     { path: '/scheduling', label: 'Calendario', hint: 'Drag & Drop en vivo' },
     { path: '/attendance', label: 'Asistencias', hint: 'Clock-in/out' },
     { path: '/requests', label: 'Novedades', hint: 'Aprobaciones 3 pasos' },
@@ -41,5 +42,12 @@ export class ShellComponent implements OnInit {
 
   goTo(path: string) {
     this.router.navigateByUrl(path);
+  }
+
+  isVisible(item: NavItem): boolean {
+    if (!item.roles) return true;
+    const userRole = this.auth.role();
+    if (!userRole) return false;
+    return item.roles.includes(userRole);
   }
 }
