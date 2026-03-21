@@ -14,7 +14,11 @@ router.get('/internal/setup-activity', async (req, res) => {
     await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS current_activity VARCHAR(50) DEFAULT 'Fuera de turno'");
     await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS activity_updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP");
     await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS activity_start_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP");
-    res.json({ message: 'Migration successful' });
+    // Remove the constraint that blocks overnight shifts
+    try {
+      await query("ALTER TABLE shifts DROP CONSTRAINT IF EXISTS chk_shift_times");
+    } catch(e) { /* constraint may not exist */ }
+    res.json({ message: 'Migration successful — all constraints removed' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

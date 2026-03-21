@@ -76,55 +76,25 @@ const getUserShifts = asyncHandler(async (req, res) => {
 });
 
 /**
- * Create new shift with WFM validation
+ * Create new shift (NO WFM validation — admin decides)
  * POST /api/shifts
  */
 const createShift = [
-  validateShift,
   asyncHandler(async (req, res) => {
     const { userId, groupId, shiftDate, startTime, endTime, shiftType } = req.body;
 
-    // Check for overlapping shifts
-    const overlaps = await shiftDAO.checkOverlap(userId, shiftDate, startTime, endTime);
-    if (overlaps.length > 0) {
-      return res.status(409).json({
-        error: 'Shift overlaps with existing shift',
-        code: 'SHIFT_OVERLAP',
-        overlaps
-      });
-    }
-
-    // WFM Intelligence validation
-    const validation = await wfmRulesDAO.validateShift(
-      userId,
-      groupId,
-      shiftDate,
-      startTime,
-      endTime
-    );
-
-    // If there are violations, return warning
-    if (!validation.valid) {
-      return res.status(400).json({
-        error: 'WFM rule violations detected',
-        code: 'WFM_VIOLATION',
-        violations: validation.violations,
-        warnings: validation.warnings
-      });
-    }
-
-    // Create shift
+    // Create shift directly — no validation, admin decides
     const shift = await shiftDAO.create({
       userId,
       groupId,
       shiftDate,
       startTime,
       endTime,
-      shiftType,
+      shiftType: shiftType || 'work',
       createdBy: req.user.id
     });
 
-    // Emit socket event (optional, may not have io attached)
+    // Emit socket event (optional)
     try {
       if (req.io) {
         emitToGroup(req.io, groupId, 'shift:updated', {
@@ -138,14 +108,13 @@ const createShift = [
 
     res.status(201).json({
       message: 'Shift created successfully',
-      shift,
-      warnings: validation.warnings
+      shift
     });
   })
 ];
 
 /**
- * Create multiple shifts (bulk)
+ * Create multiple shifts (bulk) — NO WFM validation
  * POST /api/shifts/bulk
  */
 const createBulkShifts = asyncHandler(async (req, res) => {
@@ -164,10 +133,10 @@ const createBulkShifts = asyncHandler(async (req, res) => {
     errors: []
   };
 
-  // Process each shift individually to avoid total failure
+  // Process each shift individually — NO validation, just create
   for (const shiftData of shifts) {
     try {
-      // Validate required fields
+      // Validate required fields only
       if (!shiftData.userId || !shiftData.groupId || !shiftData.shiftDate || 
           !shiftData.startTime || !shiftData.endTime) {
         results.errors.push({
@@ -177,41 +146,10 @@ const createBulkShifts = asyncHandler(async (req, res) => {
         continue;
       }
 
-      const overlaps = await shiftDAO.checkOverlap(
-        shiftData.userId,
-        shiftData.shiftDate,
-        shiftData.startTime,
-        shiftData.endTime
-      );
-
-      if (overlaps.length > 0) {
-        results.skipped.push({
-          shift: shiftData,
-          error: 'Overlaps with existing shift'
-        });
-        continue;
-      }
-
-      const validation = await wfmRulesDAO.validateShift(
-        shiftData.userId,
-        shiftData.groupId,
-        shiftData.shiftDate,
-        shiftData.startTime,
-        shiftData.endTime
-      );
-
-      if (!validation.valid) {
-        results.skipped.push({
-          shift: shiftData,
-          warning: 'WFM rule violation',
-          violations: validation.violations
-        });
-        continue;
-      }
-
-      // Create shift individually
+      // Create shift individually — no overlap or WFM checks
       const createdShift = await shiftDAO.create({
         ...shiftData,
+        shiftType: shiftData.shiftType || 'work',
         createdBy: req.user.id
       });
 

@@ -195,16 +195,18 @@ export class ApiService {
       const iso = d.toISOString().substring(0, 10);
       days.push({
         date: iso,
-        shifts: (shifts || []).filter(s => s.shift_date === iso).map(s => ({
+        shifts: (shifts || []).filter(s => s.shift_date?.substring(0, 10) === iso).map(s => ({
           id: s.id,
           empId: s.user_id,
           agent: s.first_name + ' ' + s.last_name,
           role: s.role_name,
-          group: s.group_id,
-          start: `${s.shift_date}T${s.start_time}`,
-          end: `${s.shift_date}T${s.end_time}`,
+          group: String(s.group_id),
+          start: `${s.shift_date.substring(0, 10)}T${s.start_time}`,
+          end: `${s.shift_date.substring(0, 10)}T${s.end_time}`,
           status: 'planned',
-          color: s.shift_type === 'descanso' ? '#16a34a' : '#0284c7' 
+          color: s.shift_type === 'descanso' ? '#16a34a' :
+                 s.shift_type === 'permiso' ? '#ca8a04' :
+                 s.shift_type === 'incapacidad' ? '#dc2626' : '#0284c7' 
         }))
       });
     }

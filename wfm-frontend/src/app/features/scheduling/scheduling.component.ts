@@ -146,10 +146,20 @@ export class SchedulingComponent implements OnInit {
       status: 'planned',
       color: cfg.borderColor
     };
-    const day = this.days().find(d => d.date === popup.date);
-    if (day) { day.shifts = [...day.shifts, shift]; this.days.set([...this.days()]); }
-    this.api.moveShift(shift.id, shift).subscribe();
-    this.showAddPopup.set(null);
+
+    // Use bulkCreateShifts so it properly creates a new record in DB
+    this.api.bulkCreateShifts([shift]).subscribe({
+      next: () => {
+        this.showAddPopup.set(null);
+        this.load(); // Fetch the real database IDs and correct dates
+      },
+      error: (err) => {
+        console.error("Error creating individual shift:", err);
+        alert('Error al crear el turno: ' + (err.error?.message || err.message));
+        this.showAddPopup.set(null);
+        this.load();
+      }
+    });
   }
 
   // ── DELETE ────────────────────────────────────────────
