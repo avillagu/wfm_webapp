@@ -327,9 +327,9 @@ const deleteShift = asyncHandler(async (req, res) => {
 const deleteBulkShifts = asyncHandler(async (req, res) => {
   const { userIds, startDate, endDate, groupId } = req.body;
 
-  if (!userIds || !startDate || !endDate || !groupId) {
+  if (!startDate || !endDate || !groupId) {
     return res.status(400).json({
-      error: 'userIds, startDate, endDate, and groupId are required',
+      error: 'startDate, endDate, and groupId are required',
       code: 'VALIDATION_ERROR'
     });
   }

@@ -195,10 +195,14 @@ export class SchedulingComponent implements OnInit {
     const startDate = this.deleteDateFrom;
     const endDate = this.deleteDateTo;
     const group = this.group();
-    const userIds = this.deleteEmpIds;
+    
+    // If we've selected ALL currently visible group members, we pass NULL to backend
+    // to trigger a "Whole Group Clear" which is much safer and faster.
+    const isAllGroupSelected = this.deleteEmpIds.length === this.employees().length;
+    const userIds = isAllGroupSelected ? null : this.deleteEmpIds;
 
-    if (!group || userIds.length === 0) {
-      alert('Debe seleccionar un grupo y al menos un empleado.');
+    if (!group) {
+      alert('Debe seleccionar un grupo.');
       return;
     }
 
@@ -206,21 +210,23 @@ export class SchedulingComponent implements OnInit {
     const dates = this.buildDateRange(startDate, endDate);
     const updated = this.days().map(day => {
       if (!dates.includes(day.date)) return day;
-      return { ...day, shifts: day.shifts.filter(s => !userIds.includes(s.empId ?? '')) };
+      // If we're clearing the whole group, empty everything. Otherwise, filter.
+      const remains = isAllGroupSelected ? [] : day.shifts.filter(s => !userIds?.includes(s.empId ?? ''));
+      return { ...day, shifts: remains };
     });
     this.days.set(updated);
     this.showDeleteModal.set(false);
 
     // Atomic backend call
-    this.api.bulkDeleteShifts(userIds, startDate, endDate, group).subscribe({
+    this.api.bulkDeleteShifts(userIds || [], startDate, endDate, group).subscribe({
       next: (res) => {
         console.log(`Eliminados ${res.count} turnos mediante borrado atómico.`);
-        this.load(); // Refresh to confirm source of truth
+        this.load(); // Refresh for absolute truth
       },
       error: (err) => {
-        console.error("Error en borrado masivo atómico:", err);
+        console.error("Error en borrado masivo:", err);
         alert('Error al intentar borrar los turnos en el servidor. El calendario se recargará.');
-        this.load(); // Recover from server failure
+        this.load();
       }
     });
   }
@@ -405,7 +411,12 @@ export class SchedulingComponent implements OnInit {
   }
 
   // ── UTILS ─────────────────────────────────────────────
-  private toIso(date: Date): string { return date.toISOString().substring(0, 10); }
+  private toIso(date: Date): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
 
   private buildDateRange(from: string, to: string): string[] {
     const dates: string[] = [];

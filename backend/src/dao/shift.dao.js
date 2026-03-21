@@ -229,16 +229,23 @@ class ShiftDAO {
    * Delete multiple shifts in bulk
    */
   async deleteBulk(userIds, startDate, endDate, groupId) {
-    const text = `
+    let text = `
       UPDATE shifts
       SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP
-      WHERE user_id = ANY($1)
-        AND shift_date BETWEEN $2 AND $3
-        AND group_id = $4
+      WHERE shift_date BETWEEN $1 AND $2
+        AND group_id = $3
         AND is_active = TRUE
-      RETURNING *
     `;
-    const result = await query(text, [userIds, startDate, endDate, groupId]);
+    const values = [startDate, endDate, groupId];
+    
+    if (userIds && Array.isArray(userIds) && userIds.length > 0) {
+      text += ` AND user_id = ANY($4)`;
+      values.push(userIds);
+    }
+
+    text += ` RETURNING *`;
+    
+    const result = await query(text, values);
     return result.rows;
   }
 
