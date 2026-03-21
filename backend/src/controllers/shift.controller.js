@@ -25,10 +25,13 @@ const getCalendarShifts = asyncHandler(async (req, res) => {
 
   let shifts;
 
-  if (req.user.accessibleGroupId) {
-    // Analyst - only their group
+  // Security: Analyst can ONLY see their assigned group, NO EXCEPTIONS.
+  if (req.user.roleName === 'ANALYST') {
+    if (!req.user.groupId) {
+       return res.json([]); // No group, no shifts.
+    }
     shifts = await shiftDAO.findByGroupIdAndDateRange(
-      req.user.accessibleGroupId,
+      req.user.groupId,
       startDate,
       endDate
     );
@@ -37,7 +40,7 @@ const getCalendarShifts = asyncHandler(async (req, res) => {
     shifts = await shiftDAO.findByGroupIdAndDateRange(groupId, startDate, endDate);
   } else {
     // Admin/Supervisor - all accessible groups
-    const groupIds = await getUserAccessibleGroups(req.user.id);
+    const groupIds = await getUserAccessibleGroups(req.user.id, req.user.roleName, req.user.groupId);
     shifts = await shiftDAO.findForCalendar(groupIds, startDate, endDate);
   }
 
@@ -372,15 +375,18 @@ const getShiftStats = asyncHandler(async (req, res) => {
 });
 
 // Helper: Get user accessible groups
-async function getUserAccessibleGroups(userId) {
+async function getUserAccessibleGroups(userId, roleName, groupId) {
   const { query } = require('../config/database');
+  
+  if (roleName === 'ANALYST') {
+    return groupId ? [groupId] : [];
+  }
+
+  // Admin/Supervisor - all active groups
   const text = `
-    SELECT DISTINCT g.id
-    FROM groups g
-    LEFT JOIN users u ON g.id = u.group_id
-    WHERE u.id = $1 OR g.is_active = TRUE
+    SELECT id FROM groups WHERE is_active = TRUE
   `;
-  const result = await query(text, [userId]);
+  const result = await query(text);
   return result.rows.map(r => r.id);
 }
 
