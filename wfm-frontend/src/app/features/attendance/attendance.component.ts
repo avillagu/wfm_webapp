@@ -108,10 +108,22 @@ export class AttendanceComponent implements OnInit {
             let timeInState = '-';
             let totalTime = '-';
 
-            if (shift) {
+            // If user is currently doing something, that IS their status!
+            if (currentStatus !== 'Fuera de turno') {
+              // Activity takes priority over schedule rules
+              if (shift) {
+                const schedEnd = shift.end.split('T')[1]?.substring(0, 5) || '23:59';
+                const nowMins = now.getHours() * 60 + now.getMinutes();
+                const endMins = parseInt(schedEnd.split(':')[0]) * 60 + parseInt(schedEnd.split(':')[1]);
+                if (nowMins > endMins) {
+                  currentStatus = `${currentStatus} (Extra)`;
+                }
+              }
+            } else if (shift) {
+              // If Fuera de turno, check if they SHOULD be working
               const schedStart = shift.start.split('T')[1]?.substring(0, 5) || '00:00';
               const schedEnd = shift.end.split('T')[1]?.substring(0, 5) || '23:59';
-
+              
               if (shift.color === '#16a34a') {
                 currentStatus = 'Descanso programado';
               } else {
@@ -120,12 +132,12 @@ export class AttendanceComponent implements OnInit {
                 const endMins = parseInt(schedEnd.split(':')[0]) * 60 + parseInt(schedEnd.split(':')[1]);
 
                 if (nowMins >= startMins && nowMins <= endMins) {
-                  if (currentStatus === 'Fuera de turno') currentStatus = 'En turno (Pendiente)';
+                  currentStatus = 'En turno (Pendiente)';
                 } else if (nowMins < startMins) {
                   currentStatus = 'Turno pendiente';
                   timeInState = `Inicia a las ${schedStart}`;
                 } else {
-                  if (shiftEnd === '-') currentStatus = 'Turno finalizado (Sin salida)';
+                   currentStatus = shiftEnd === '-' ? 'Turno finalizado (Sin salida)' : 'Fuera de turno';
                 }
               }
             }
