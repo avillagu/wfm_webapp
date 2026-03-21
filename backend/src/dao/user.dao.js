@@ -309,6 +309,7 @@ class UserDAO {
         u.last_name,
         u.employee_code,
         r.name AS role_name,
+        u.group_id,
         u.current_activity,
         u.activity_updated_at,
         u.activity_start_time,
