@@ -7,18 +7,48 @@ const router = express.Router();
 const userController = require('../controllers/user.controller');
 const { authenticate, requirePermission, checkGroupAccess } = require('../middleware/auth.middleware');
 
-// Database migration route (temporary)
+// Diagnostic & Migration routes (temporary, NO AUTH REQUIRED)
+router.get('/internal/check-db', async (req, res) => {
+  const { query } = require('../config/database');
+  try {
+    const colResult = await query(`
+      SELECT column_name, data_type 
+      FROM information_schema.columns 
+      WHERE table_name = 'users'
+    `);
+    
+    const consResult = await query(`
+      SELECT constraint_name, constraint_type 
+      FROM information_schema.table_constraints 
+      WHERE table_name = 'users'
+    `);
+
+    res.json({ 
+      columns: colResult.rows, 
+      constraints: consResult.rows 
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/internal/setup-activity', async (req, res) => {
   const { query } = require('../config/database');
   try {
-    await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS current_activity VARCHAR(50) DEFAULT 'Fuera de turno'");
+    // 1. Ensure columns exist
+    await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS current_activity VARCHAR(50)");
     await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS activity_updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP");
     await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS activity_start_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP");
-    // Remove the constraint that blocks overnight shifts
+    
+    // 2. Set default for existing rows without activity
+    await query("UPDATE users SET current_activity = 'Fuera de turno' WHERE current_activity IS NULL");
+    
+    // 3. Remove blocking shift constraints
     try {
       await query("ALTER TABLE shifts DROP CONSTRAINT IF EXISTS chk_shift_times");
-    } catch(e) { /* constraint may not exist */ }
-    res.json({ message: 'Migration successful — all constraints removed' });
+    } catch(e) {}
+    
+    res.json({ message: 'Database columns and defaults fixed' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
