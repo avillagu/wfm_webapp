@@ -101,6 +101,16 @@ app.use((req, res, next) => {
   next();
 });
 
+// Root level diagnostic route (Truly public)
+app.get('/diagnostic-db', async (req, res) => {
+  try {
+    const colResult = await pool.query("SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'users'");
+    res.json({ users_columns: colResult.rows });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Setup Swagger
 setupDocs(app);
 

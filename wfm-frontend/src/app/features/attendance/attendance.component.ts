@@ -204,7 +204,8 @@ export class AttendanceComponent implements OnInit {
       this.lastAction.set(previousAction);
       this.shiftStartTime.set(previousShiftStartTime);
       // Optional: Inform user, relying on native alert for absolute maximum visibility
-      alert('Error: No se pudo actualizar el estado. Por favor, verifique su red o intente de nuevo.');
+      const statusText = err.status ? `(Código: ${err.status})` : '';
+      alert(`Error ${statusText}: No se pudo actualizar el estado. Por favor, verifique su red o intente de nuevo.`);
     };
 
     // Save to the db current_activity
