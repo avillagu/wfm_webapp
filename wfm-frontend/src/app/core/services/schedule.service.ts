@@ -25,6 +25,6 @@ export class ScheduleService {
   }
 
   listenUpdates() {
-    return this.realtime.on<ShiftUpdateEvent>('schedule:updated');
+    return this.realtime.on<ShiftUpdateEvent>('shift:updated');
   }
 }
