@@ -45,18 +45,24 @@ const clockIn = asyncHandler(async (req, res) => {
   // Create punch record
   const punch = await punchDAO.clockIn(req.user.id, shiftId, location);
 
-  // Emit socket event (optional)
+  // Emit socket event
   try {
     if (req.io) {
-      const rooms = [`group:${req.user.groupId}`, 'role:ADMIN', 'role:SUPERVISOR'];
-      req.io.to(rooms).emit('punch:updated', {
+      let emitter = req.io.to('role:ADMIN').to('role:SUPERVISOR');
+      if (req.user.groupId) {
+        emitter = emitter.to(`group:${req.user.groupId}`);
+      }
+      
+      emitter.emit('punch:updated', {
         userId: req.user.id,
         username: req.user.username,
         action: 'clock_in',
         timestamp: punch.punch_in
       });
     }
-  } catch(e) { /* socket not available */ }
+  } catch(e) { 
+    console.error("Socket emit error [clock_in]:", e); 
+  }
 
   res.status(201).json({
     message: 'Clocked in successfully',
@@ -102,17 +108,24 @@ const clockOut = asyncHandler(async (req, res) => {
   // Clock out
   const updatedPunch = await punchDAO.clockOut(activePunch.id, location);
 
-  // Emit socket event (optional)
+  // Emit socket event
   try {
     if (req.io) {
-      emitToGroup(req.io, req.user.groupId, 'punch:updated', {
+      let emitter = req.io.to('role:ADMIN').to('role:SUPERVISOR');
+      if (req.user.groupId) {
+        emitter = emitter.to(`group:${req.user.groupId}`);
+      }
+      
+      emitter.emit('punch:updated', {
         userId: req.user.id,
         username: req.user.username,
         action: 'clock_out',
         timestamp: updatedPunch.punch_out
       });
     }
-  } catch(e) { /* socket not available */ }
+  } catch(e) { 
+    console.error("Socket emit error [clock_out]:", e); 
+  }
 
   res.json({
     message: 'Clocked out successfully',

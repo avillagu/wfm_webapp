@@ -166,18 +166,22 @@ const updateActivity = asyncHandler(async (req, res) => {
 
   const updatedUser = await userDAO.updateActivity(req.user.id, activity);
 
-  // Opt: Emit socket event so admins see the new state in real-time
+  // Emit socket event so admins see the new state in real-time
   try {
     if (req.io) {
-      const rooms = ['role:ADMIN', 'role:SUPERVISOR'];
-      if (req.user.groupId) rooms.push(`group:${req.user.groupId}`);
+      let emitter = req.io.to('role:ADMIN').to('role:SUPERVISOR');
+      if (req.user.groupId) {
+        emitter = emitter.to(`group:${req.user.groupId}`);
+      }
       
-      req.io.to(rooms).emit('user:activity', {
+      emitter.emit('user:activity', {
         userId: req.user.id,
         activity
       });
     }
-  } catch(e) {}
+  } catch(e) {
+    console.error("Socket emit error [activity]:", e);
+  }
 
   res.json({
     message: 'Activity updated',

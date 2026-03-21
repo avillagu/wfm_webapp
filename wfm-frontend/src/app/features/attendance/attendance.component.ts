@@ -188,37 +188,44 @@ export class AttendanceComponent implements OnInit {
   }
 
   changeStatus(newStatus: 'En turno' | 'En descanso' | 'En baño' | 'Fuera de turno') {
+    const previousStatus = this.status();
+    const previousAction = this.lastAction();
+    const previousShiftStartTime = this.shiftStartTime();
+
+    // Optimistically set the state locally
+    this.status.set(newStatus);
+    this.lastAction.set(new Date().toISOString());
+
+    // Utility function to rollback state on error
+    const rollback = (err: any) => {
+      console.error('Status update failed:', err);
+      // Revert states
+      this.status.set(previousStatus);
+      this.lastAction.set(previousAction);
+      this.shiftStartTime.set(previousShiftStartTime);
+      // Optional: Inform user, relying on native alert for absolute maximum visibility
+      alert('Error: No se pudo actualizar el estado. Por favor, verifique su red o intente de nuevo.');
+    };
+
     // Save to the db current_activity
-    this.api.updateActivity(newStatus).subscribe();
+    this.api.updateActivity(newStatus).subscribe({
+      error: (err) => rollback(err)
+    });
 
     if (newStatus === 'Fuera de turno') {
       this.api.clock('out').subscribe({
         next: (res: any) => {
-          this.status.set(newStatus);
-          this.lastAction.set(null);
           this.shiftStartTime.set(null);
         },
-        error: () => {
-          this.status.set(newStatus);
-          this.lastAction.set(null);
-          this.shiftStartTime.set(null);
-        }
+        error: (err) => rollback(err)
       });
-    } else if (newStatus === 'En turno' && this.status() === 'Fuera de turno') {
+    } else if (newStatus === 'En turno' && previousStatus === 'Fuera de turno') {
       this.api.clock('in').subscribe({
         next: (res: any) => {
-          this.status.set(newStatus);
-          this.lastAction.set(new Date().toISOString());
           this.shiftStartTime.set(res.timestamp);
         },
-        error: () => {
-          this.status.set(newStatus);
-          this.lastAction.set(new Date().toISOString());
-        }
+        error: (err) => rollback(err)
       });
-    } else {
-      this.status.set(newStatus);
-      this.lastAction.set(new Date().toISOString());
     }
   }
 }
