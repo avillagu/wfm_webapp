@@ -321,6 +321,39 @@ const deleteShift = asyncHandler(async (req, res) => {
 });
 
 /**
+ * Delete shifts in bulk
+ * DELETE /api/shifts/bulk-delete
+ */
+const deleteBulkShifts = asyncHandler(async (req, res) => {
+  const { userIds, startDate, endDate, groupId } = req.body;
+
+  if (!userIds || !startDate || !endDate || !groupId) {
+    return res.status(400).json({
+      error: 'userIds, startDate, endDate, and groupId are required',
+      code: 'VALIDATION_ERROR'
+    });
+  }
+
+  const deletedShifts = await shiftDAO.deleteBulk(userIds, startDate, endDate, groupId);
+
+  // Emit socket event
+  try {
+    if (req.io && deletedShifts.length > 0) {
+      emitToGroup(req.io, groupId, 'shift:updated', {
+        action: 'bulk_deleted',
+        count: deletedShifts.length,
+        updatedBy: req.user.username
+      });
+    }
+  } catch(e) { /* socket not available */ }
+
+  res.json({
+    message: `${deletedShifts.length} shifts deleted successfully`,
+    count: deletedShifts.length
+  });
+});
+
+/**
  * Get shift statistics
  * GET /api/shifts/stats?groupId=X&startDate=Y&endDate=Z
  */
@@ -359,5 +392,6 @@ module.exports = {
   getShiftById,
   updateShift,
   deleteShift,
+  deleteBulkShifts,
   getShiftStats
 };

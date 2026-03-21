@@ -192,40 +192,37 @@ export class SchedulingComponent implements OnInit {
   }
 
   confirmDeleteBulk() {
-    const dates = this.buildDateRange(this.deleteDateFrom, this.deleteDateTo);
-    const deleteOps: any[] = [];
-    
-    // Collect all shifts to delete
-    this.days().forEach(day => {
-      if (!dates.includes(day.date)) return;
-      const toDelete = day.shifts.filter(s => this.deleteEmpIds.includes(s.empId ?? ''));
-      toDelete.forEach(s => deleteOps.push(this.api.deleteShift(s.id)));
-    });
+    const startDate = this.deleteDateFrom;
+    const endDate = this.deleteDateTo;
+    const group = this.group();
+    const userIds = this.deleteEmpIds;
 
-    if (deleteOps.length > 0) {
-      // Optimistic visual update
-      const updated = this.days().map(day => {
-        if (!dates.includes(day.date)) return day;
-        return { ...day, shifts: day.shifts.filter(s => !this.deleteEmpIds.includes(s.empId ?? '')) };
-      });
-      this.days.set(updated);
-      this.showDeleteModal.set(false);
-
-      // Execute on server
-      forkJoin(deleteOps).subscribe({
-        next: () => {
-          // Confirm success quietly and fetch just in case
-          this.load(); 
-        },
-        error: (err) => {
-          console.error("Error bulk deleting:", err);
-          alert('Algunos turnos no pudieron ser eliminados (Verifique su conexión o límite de tasa).');
-          this.load(); // Rollback UI if errors happen
-        }
-      });
-    } else {
-      this.showDeleteModal.set(false);
+    if (!group || userIds.length === 0) {
+      alert('Debe seleccionar un grupo y al menos un empleado.');
+      return;
     }
+
+    // Optimistic UI update
+    const dates = this.buildDateRange(startDate, endDate);
+    const updated = this.days().map(day => {
+      if (!dates.includes(day.date)) return day;
+      return { ...day, shifts: day.shifts.filter(s => !userIds.includes(s.empId ?? '')) };
+    });
+    this.days.set(updated);
+    this.showDeleteModal.set(false);
+
+    // Atomic backend call
+    this.api.bulkDeleteShifts(userIds, startDate, endDate, group).subscribe({
+      next: (res) => {
+        console.log(`Eliminados ${res.count} turnos mediante borrado atómico.`);
+        this.load(); // Refresh to confirm source of truth
+      },
+      error: (err) => {
+        console.error("Error en borrado masivo atómico:", err);
+        alert('Error al intentar borrar los turnos en el servidor. El calendario se recargará.');
+        this.load(); // Recover from server failure
+      }
+    });
   }
 
   toggleDeleteEmployee(id: string) {

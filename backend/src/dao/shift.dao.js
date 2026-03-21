@@ -226,6 +226,23 @@ class ShiftDAO {
   }
 
   /**
+   * Delete multiple shifts in bulk
+   */
+  async deleteBulk(userIds, startDate, endDate, groupId) {
+    const text = `
+      UPDATE shifts
+      SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP
+      WHERE user_id = ANY($1)
+        AND shift_date BETWEEN $2 AND $3
+        AND group_id = $4
+        AND is_active = TRUE
+      RETURNING *
+    `;
+    const result = await query(text, [userIds, startDate, endDate, groupId]);
+    return result.rows;
+  }
+
+  /**
    * Check for overlapping shifts for a user on a date
    */
   async checkOverlap(userId, shiftDate, startTime, endTime, excludeShiftId = null) {

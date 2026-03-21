@@ -59,4 +59,11 @@ router.delete('/:id',
   shiftController.deleteShift
 );
 
+// Bulk delete shifts
+router.post('/bulk-delete',
+  checkGroupAccess('groupId'),
+  requirePermission('shifts', 'DELETE'),
+  shiftController.deleteBulkShifts
+);
+
 module.exports = router;

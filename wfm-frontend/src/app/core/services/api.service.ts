@@ -158,6 +158,10 @@ export class ApiService {
     return this.http.delete(`${this.base}/shifts/${shiftId}`, { headers: this.headers });
   }
 
+  bulkDeleteShifts(userIds: string[], startDate: string, endDate: string, groupId: string): Observable<any> {
+    return this.http.post(`${this.base}/shifts/bulk-delete`, { userIds, startDate, endDate, groupId }, { headers: this.headers });
+  }
+
   bulkCreateShifts(shifts: Shift[]): Observable<any> {
     const backendShifts = shifts.map(s => {
       const startTime = s.start.split('T')[1].substring(0, 5);
