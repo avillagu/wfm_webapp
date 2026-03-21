@@ -298,6 +298,27 @@ class UserDAO {
   }
 
   /**
+   * Update current user activity
+   */
+  async updateActivity(userId, activity) {
+    const text = `
+      UPDATE users
+      SET 
+        current_activity = $1,
+        activity_updated_at = CURRENT_TIMESTAMP,
+        activity_start_time = CASE 
+          WHEN current_activity = $1 THEN activity_start_time 
+          ELSE CURRENT_TIMESTAMP 
+        END,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+      RETURNING id, username, current_activity, activity_start_time
+    `;
+    const result = await query(text, [activity, userId]);
+    return result.rows[0];
+  }
+
+  /**
    * Get users by group ID
    */
   async findByGroupId(groupId) {
