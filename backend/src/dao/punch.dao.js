@@ -178,8 +178,8 @@ class PunchDAO {
       FROM punches p
       JOIN users u ON p.user_id = u.id
       LEFT JOIN shifts s ON p.shift_id = s.id
-      WHERE p.punch_in >= $1
-        AND p.punch_in < ($2 + INTERVAL '1 day')
+      WHERE p.punch_in >= $1::timestamp
+        AND p.punch_in < ($2::timestamp + INTERVAL '1 day')
       ORDER BY p.punch_in DESC
     `;
     const result = await query(text, [startDate, endDate]);
