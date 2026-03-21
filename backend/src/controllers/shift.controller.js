@@ -149,85 +149,89 @@ const createShift = [
  * POST /api/shifts/bulk
  */
 const createBulkShifts = asyncHandler(async (req, res) => {
-  const { shifts } = req.body;
+  try {
+    const { shifts } = req.body;
 
-  if (!Array.isArray(shifts) || shifts.length === 0) {
-    return res.status(400).json({
-      error: 'Shifts array required',
-      code: 'VALIDATION_ERROR'
-    });
-  }
-
-  // Validate each shift — skip invalid ones instead of rejecting all
-  const validatedShifts = [];
-  const warnings = [];
-
-  for (const shiftData of shifts) {
-    // Check overlap
-    const overlaps = await shiftDAO.checkOverlap(
-      shiftData.userId,
-      shiftData.shiftDate,
-      shiftData.startTime,
-      shiftData.endTime
-    );
-
-    if (overlaps.length > 0) {
-      warnings.push({
-        shift: shiftData,
-        error: 'Overlaps with existing shift — skipped'
-      });
-      continue;
-    }
-
-    // WFM validation — warn but still allow
-    const validation = await wfmRulesDAO.validateShift(
-      shiftData.userId,
-      shiftData.groupId,
-      shiftData.shiftDate,
-      shiftData.startTime,
-      shiftData.endTime
-    );
-
-    if (!validation.valid) {
-      // Log the warning but still create the shift
-      warnings.push({
-        shift: shiftData,
-        warning: 'WFM rule warning — shift created anyway',
-        violations: validation.violations
+    if (!Array.isArray(shifts) || shifts.length === 0) {
+      return res.status(400).json({
+        error: 'Shifts array required',
+        code: 'VALIDATION_ERROR'
       });
     }
 
-    validatedShifts.push({
-      ...shiftData,
-      createdBy: req.user.id
-    });
-  }
+    const validatedShifts = [];
+    const warnings = [];
 
-  let createdShifts = [];
-  if (validatedShifts.length > 0) {
-    createdShifts = await shiftDAO.createMany(validatedShifts);
+    for (const shiftData of shifts) {
+      const overlaps = await shiftDAO.checkOverlap(
+        shiftData.userId,
+        shiftData.shiftDate,
+        shiftData.startTime,
+        shiftData.endTime
+      );
 
-    // Emit socket events (optional)
-    try {
-      if (req.io) {
-        const groupIds = [...new Set(validatedShifts.map(s => s.groupId))];
-        groupIds.forEach(groupId => {
-          emitToGroup(req.io, groupId, 'shift:updated', {
-            action: 'bulk_created',
-            count: createdShifts.length,
-            updatedBy: req.user.username
-          });
+      if (overlaps.length > 0) {
+        warnings.push({
+          shift: shiftData,
+          error: 'Overlaps with existing shift — skipped'
+        });
+        continue;
+      }
+
+      const validation = await wfmRulesDAO.validateShift(
+        shiftData.userId,
+        shiftData.groupId,
+        shiftData.shiftDate,
+        shiftData.startTime,
+        shiftData.endTime
+      );
+
+      if (!validation.valid) {
+        warnings.push({
+          shift: shiftData,
+          warning: 'WFM rule warning — shift created anyway',
+          violations: validation.violations
         });
       }
-    } catch(e) { /* socket not available */ }
-  }
 
-  res.status(201).json({
-    message: `${createdShifts.length} shifts created successfully`,
-    shifts: createdShifts,
-    warnings: warnings.length > 0 ? warnings : undefined,
-    skipped: warnings.length
-  });
+      validatedShifts.push({
+        ...shiftData,
+        createdBy: req.user.id
+      });
+    }
+
+    let createdShifts = [];
+    if (validatedShifts.length > 0) {
+      createdShifts = await shiftDAO.createMany(validatedShifts);
+
+      try {
+        if (req.io) {
+          const groupIds = [...new Set(validatedShifts.map(s => s.groupId))];
+          groupIds.forEach(groupId => {
+            emitToGroup(req.io, groupId, 'shift:updated', {
+              action: 'bulk_created',
+              count: createdShifts.length,
+              updatedBy: req.user.username
+            });
+          });
+        }
+      } catch(e) { /* socket not available */ }
+    }
+
+    res.status(201).json({
+      message: `${createdShifts.length} shifts created successfully`,
+      shifts: createdShifts,
+      warnings: warnings.length > 0 ? warnings : undefined,
+      skipped: warnings.length
+    });
+  } catch (error) {
+    console.error("FATAL ERROR IN BULK SHIFTS:", error);
+    res.status(500).json({
+      error: 'CRITICAL_BULK_ERROR',
+      message: error.message,
+      stack: error.stack
+    });
+  }
 });
 
 /**

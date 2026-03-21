@@ -294,9 +294,11 @@ export class SchedulingComponent implements OnInit {
           },
           error: (err) => {
             console.error("Error salvando turnos masivos:", err);
+            // Mostrar error al usuario
+            alert(`Hubo un problema al crear los turnos: ${err.error?.error || err.message}`);
             // Reload from server to show actual state
             this.load();
-            this.showBulkModal.set(false);
+            // Do not close the modal automatically so they see the error
           }
         });
       };

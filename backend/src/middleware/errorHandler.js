@@ -3,7 +3,7 @@
  * Centralized error handling and logging
  */
 
-const { errorHandler: logError } = require('../utils/logger');
+const { logError } = require('../utils/logger');
 
 class AppError extends Error {
   constructor(message, statusCode, code) {
