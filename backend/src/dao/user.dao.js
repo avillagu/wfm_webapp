@@ -309,8 +309,7 @@ class UserDAO {
         activity_start_time = CASE 
           WHEN current_activity = $1 THEN activity_start_time 
           ELSE CURRENT_TIMESTAMP 
-        END,
-        updated_at = CURRENT_TIMESTAMP
+        END
       WHERE id = $2
       RETURNING id, username, current_activity, activity_start_time
     `;
