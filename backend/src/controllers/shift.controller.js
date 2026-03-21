@@ -229,18 +229,6 @@ const updateShift = asyncHandler(async (req, res) => {
     });
   }
 
-  // Check for overlaps (excluding current shift)
-  if (shiftDate && startTime && endTime) {
-    const overlaps = await shiftDAO.checkOverlap(
-      userId || existingShift.user_id,
-      shiftDate || existingShift.shift_date,
-      startTime || existingShift.start_time,
-      endTime || existingShift.end_time,
-      req.params.id
-    );
-
-  }
-
   const shift = await shiftDAO.update(req.params.id, {
     userId,
     groupId,

@@ -150,11 +150,11 @@ export class ApiService {
     }
     
     const backendPayload = {
-      user_id: payload.empId,
-      shift_date: payload.start?.split('T')[0],
-      start_time: startTime,
-      end_time: endTime,
-      shift_type: shiftType
+      userId: payload.empId,
+      shiftDate: payload.start?.split('T')[0],
+      startTime,
+      endTime,
+      shiftType
     };
     return this.http.put(`${this.base}/shifts/${shiftId}`, backendPayload, { headers: this.headers });
   }
